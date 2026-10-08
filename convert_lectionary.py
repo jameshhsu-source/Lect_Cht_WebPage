@@ -2590,7 +2590,9 @@ for ev in all_final_events:
         # 若有中文對應（含有括號），優先用中文歌名搜尋 YouTube，否則用原英文
         if "(" in h and ")" in h:
             zh_title = h.split("(")[0].strip()
-            search_kw = f"聖詩 {zh_title}"
+            eng_match = re.search(r'\((.*?)\)', h)
+            eng_title = eng_match.group(1).strip() if eng_match else ""
+            search_kw = f"{zh_title} {eng_title}".strip()
         else:
             search_kw = h
             
