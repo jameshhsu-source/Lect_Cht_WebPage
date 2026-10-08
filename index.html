@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三代經課與詩歌查詢</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; line-height: 1.6; background-color: #f8fafc; color: #1e293b; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .search-area { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="date"] { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; flex-grow: 1; font-size: 1rem; }
+        button { padding: 10px 20px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+        button:hover { background-color: #1d4ed8; }
+        .alert { background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; display: none; }
+        h2 { color: #0f172a; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .section-title { font-weight: bold; color: #334155; margin-top: 20px; background: #f1f5f9; padding: 5px 10px; border-radius: 4px; }
+        .data-list { padding-left: 20px; margin-top: 10px; }
+        .meta { margin-top: 20px; font-size: 0.95rem; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
+        a { color: #2563eb; text-decoration: none; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>📖 經課與詩歌查詢</h2>
+    <div class="search-area">
+        <input type="date" id="dateInput">
+        <button onclick="handleSearch()">查詢</button>
+    </div>
+    <div id="alertBox" class="alert"></div>
+    <div id="resultContent">載入資料庫中...</div>
+</div>
+
+<script>
+    let lectionaryData = {};
+
+    // 處理時區，取得本地 YYYY-MM-DD
+    function getLocalDateString(dateObj) {
+        const tzOffset = dateObj.getTimezoneOffset() * 60000;
+        return new Date(dateObj - tzOffset).toISOString().split('T')[0];
+    }
+
+    window.onload = function() {
+        const todayStr = getLocalDateString(new Date());
+        document.getElementById('dateInput').value = todayStr;
+
+        fetch('rcl_data.json')
+            .then(response => response.json())
+            .then(data => {
+                lectionaryData = data;
+                findClosestData(todayStr);
+            })
+            .catch(error => {
+                document.getElementById('resultContent').innerHTML = "資料庫載入失敗，請確認 rcl_data.json 是否存在。";
+            });
+    }
+
+    function handleSearch() {
+        const targetDate = document.getElementById('dateInput').value;
+        if(targetDate) findClosestData(targetDate);
+    }
+
+    function findClosestData(targetDateStr) {
+        let currentDate = new Date(targetDateStr);
+        let found = false;
+        let lookbackDays = 0;
+
+        // 最多往前找 30 天
+        while (lookbackDays < 30) {
+            let searchStr = getLocalDateString(currentDate);
+            if (lectionaryData[searchStr]) {
+                renderData(searchStr, lectionaryData[searchStr], lookbackDays > 0, targetDateStr);
+                found = true;
+                break;
+            }
+            currentDate.setDate(currentDate.getDate() - 1);
+            lookbackDays++;
+        }
+
+        if (!found) {
+            document.getElementById('alertBox').style.display = 'none';
+            document.getElementById('resultContent').innerHTML = "<p>找不到該日期或相近的節期資料。</p>";
+        }
+    }
+
+    function renderData(dateStr, data, isFallback, originalDate) {
+        const alertBox = document.getElementById('alertBox');
+        if (isFallback) {
+            alertBox.style.display = 'block';
+            alertBox.innerHTML = `⚠️ ${originalDate} 當日無資料，自動顯示最近的節期：<b>${dateStr}</b>`;
+        } else {
+            alertBox.style.display = 'none';
+        }
+
+        let html = `<h3 style="margin-bottom:5px;">${data.title}</h3>`;
+        
+        // 經文
+        html += `<div class="section-title">📜 經課經文</div><div class="data-list">`;
+        data.scriptures.forEach(item => html += `<div>${item}</div>`);
+        html += `</div>`;
+
+        // 古典詩歌
+        html += `<div class="section-title">⛪ 古典詩歌</div><ul class="data-list">`;
+        if (data.classical_hymns && data.classical_hymns.length > 0) {
+            data.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+        } else {
+            html += `<li style="color:#94a3b8; list-style:none;">(無對應古典詩歌)</li>`;
+        }
+        html += `</ul>`;
+
+        // 現代詩歌
+        html += `<div class="section-title">🎸 現代詩歌</div><ul class="data-list">`;
+        data.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+        html += `</ul>`;
+
+        // 顏色與意義
+        html += `<div class="meta">`;
+        if (data.color) html += `<p><strong>代表顏色：</strong> ${data.color}</p>`;
+        if (data.meaning) html += `<p><strong>節期意義：</strong> ${data.meaning}</p>`;
+        html += `</div>`;
+
+        document.getElementById('resultContent').innerHTML = html;
+    }
+</script>
+
+</body>
+</html>
