@@ -2424,14 +2424,14 @@ import json
 import re
 from collections import defaultdict
 
-# 1. 根據 (season, sunday) 建立古典詩歌字典
+# 1. 參照您提供的《普天頌讚》目錄清單建立的精準對應字典
 classical_hymns_map = {
     # === 將臨期與聖誕期 ===
-    ("Advent", "First Sunday"): {"All": ["Savior of the nations, come"]},
-    ("Advent", "Second Sunday"): {"All": ["On Jordan's bank the Baptist's cry"]},
+    ("Advent", "First Sunday"): {"All": ["主愛奇恩歌 (O Love, How Deep, How Broad, How High)"]},
+    ("Advent", "Second Sunday"): {"All": ["約翰宣言歌 (On Jordan's Bank The Baptist's Cry)"]},
     ("Advent", "Third Sunday"): {"All": ["Hark! A thrilling voice is sounding"]},
-    ("Advent", "Fourth Sunday"): {"All": ["O come, O come, Emmanuel"]},
-    ("Christmas", "Christmas Eve"): {"All": ["Lo, how a rose e'er blooming"]},
+    ("Advent", "Fourth Sunday"): {"All": ["以馬內利來臨歌 (O Come, O Come, Emmanuel)"]},
+    ("Christmas", "Christmas Eve"): {"All": ["耶西之條歌 (Lo, How A Rose Ever Blooming)"]},
     ("Christmas", "Christmas Day"): {"All": ["We praise You, Jesus, at Your birth"]},
     ("Christmas", "First Sunday"): {"All": ["Let all together praise our God"]},
     ("Christmas", "Second Sunday"): {"All": ["Within the Father's house"]},
@@ -2442,40 +2442,40 @@ classical_hymns_map = {
     ("Epiphany", "Second Sunday"): {"All": ["The only Son from heaven"]},
     ("Epiphany", "Third Sunday"): {"All": ["O Christ, our true and only light"]},
     ("Epiphany", "Fourth Sunday"): {"All": ["Son of God, eternal Savior"]},
-    ("Epiphany", "Fifth Sunday"): {"A": ["Thy strong word did cleave the darkness"], "B": ["Hail to the Lord's anointed"], "C": ["Hail to the Lord's anointed"]},
+    ("Epiphany", "Fifth Sunday"): {"A": ["Thy strong word did cleave the darkness"], "B": ["膏立新王歌 (Hail To The Lord's Anointed)"], "C": ["膏立新王歌 (Hail To The Lord's Anointed)"]},
     ("Epiphany", "Sixth Sunday"): {"All": ["Songs of thankfulness and praise"]},
-    ("Epiphany", "Seventh Sunday"): {"All": ["My soul, now praise your Maker", "O God, O Lord of heaven and earth"]},
+    ("Epiphany", "Seventh Sunday"): {"All": ["感恩歌 (My Soul, Praise Thou The Lord)", "O God, O Lord of heaven and earth"]},
     ("Epiphany", "Eighth Sunday"): {"All": ["Sing praise to God, the highest good"]},
     ("Epiphany", "Transfiguration"): {"All": ["O wondrous type! O vision fair"]},
     ("Epiphany", "Last Sunday"): {"All": ["O wondrous type! O vision fair"]},
     
     # === 預苦期與聖週 ===
-    ("Lent", "Ash Wednesday"): {"All": ["From depths of woe I cry to Thee"]},
-    ("Lent", "First Sunday"): {"All": ["A mighty fortress is our God"]},
+    ("Lent", "Ash Wednesday"): {"All": ["深處呼求歌 (From Depths Of Woe I Raise To Thee)"]},
+    ("Lent", "First Sunday"): {"All": ["堅固保障歌 (A Mighty Fortress Is Our God)"]},
     ("Lent", "Second Sunday"): {"All": ["Lord, Thee I love with all my heart"]},
     ("Lent", "Third Sunday"): {"All": ["May God bestow on us His grace"]},
     ("Lent", "Fourth Sunday"): {"All": ["God loved the world so that He gave", "I trust, O Christ, in You alone"]},
-    ("Lent", "Fifth Sunday"): {"All": ["My song is love unknown"]},
-    ("Holy Week", "Palm Sunday"): {"All": ["All glory, laud, and honor", "A Lamb goes uncomplaining forth"]},
+    ("Lent", "Fifth Sunday"): {"All": ["無比大愛歌 (My Song Is Love Unknown)"]},
+    ("Holy Week", "Palm Sunday"): {"All": ["無量榮光歌 (All Glory, Laud And Honour)", "A Lamb goes uncomplaining forth"]},
     ("Holy Week", "Maundy Thursday"): {"All": ["O Lord, we praise Thee"]},
     ("Holy Week", "Good Friday"): {"All": ["Sing, my tongue, the glorious battle"]},
     
     # === 復活期與聖靈降臨 ===
     ("Easter", "Easter Sunday"): {"All": ["Awake, my heart, with gladness", "Christ Jesus lay in death's strong bands"]},
-    ("Easter", "Second Sunday"): {"All": ["O sons and daughters of the King"]},
+    ("Easter", "Second Sunday"): {"All": ["慶主復活歌 (O Sons And Daughters, Let Us Sing)"]},
     ("Easter", "Third Sunday"): {"All": ["With high delight let us unite"]},
-    ("Easter", "Fourth Sunday"): {"All": ["The King of love my shepherd is"]},
-    ("Easter", "Fifth Sunday"): {"All": ["At the Lamb's high feast we sing"]},
+    ("Easter", "Fourth Sunday"): {"All": ["善牧恩慈歌 (The King Of Love My Shepherd Is)"]},
+    ("Easter", "Fifth Sunday"): {"All": ["羔羊筵上歌 (At The Lamb's High Feast We Sing)"]},
     ("Easter", "Sixth Sunday"): {"All": ["Dear Christians, one and all, rejoice"]},
     ("Easter", "Seventh Sunday"): {"All": ["Christ is the world's Redeemer"]},
     ("Easter", "Ascension"): {"All": ["Up through endless ranks of angels"]},
-    ("Pentecost", "Pentecost Sunday"): {"All": ["Come, Holy Ghost, God and Lord"]},
+    ("Pentecost", "Pentecost Sunday"): {"All": ["聖靈來臨歌 (Come, Holy Spirit, God And Lord)"]},
     
     # === 常年期與節日 ===
     ("Ordinary Time", "Trinity Sunday"): {"All": ["Come, Holy Ghost, Creator blest"]},
-    ("Ordinary Time", "Christ the King"): {"A": ["The Head that once was crowned with thorns"], "B": ["Lo! He comes with clouds descending"], "C": ["Lord, enthroned in heav'nly splendor"]},
-    ("Ordinary Time", "Reformation"): {"All": ["A mighty fortress is our God", "Salvation unto us has come"]},
-    ("Ordinary Time", "All Saints"): {"All": ["For all the saints who from their labors rest"]},
+    ("Ordinary Time", "Christ the King"): {"A": ["主戴榮光歌 (The Head, That Once Was Crowned)"], "B": ["基督再臨歌 (Lo! He Comes With Clouds Descending)"], "C": ["真生命糧歌 (Lord, Enthroned In Heavenly Splendor)"]},
+    ("Ordinary Time", "Reformation"): {"All": ["堅固保障歌 (A Mighty Fortress Is Our God)", "Salvation unto us has come"]},
+    ("Ordinary Time", "All Saints"): {"All": ["眾聖歌 (For All The Saints Who From Their Labours Rest)"]},
     ("Ordinary Time", "Holy Cross"): {"All": ["Sing, my tongue, the glorious battle", "The royal banners forward go"]},
     
     # === 常年期 Proper 3 ~ 29 ===
@@ -2498,7 +2498,7 @@ classical_hymns_map = {
     ("Ordinary Time", "Proper 19"): {"A": ["Come down, O Love divine"], "B": ["Praise the One who breaks the darkness"], "C": ["Jesus sinners doth receive"]},
     ("Ordinary Time", "Proper 20"): {"A": ["Salvation unto us has come"], "B": ["Lord of glory, You have bought us"], "C": ["Seek where you may to find a way"]},
     ("Ordinary Time", "Proper 21"): {"A": ["Lord, keep us steadfast in Your Word"], "B": ["Triune God, be Thou our stay"], "C": ["Lord, Thee I love with all my heart"]},
-    ("Ordinary Time", "Proper 22"): {"A": ["O love, how deep, how broad, how high"], "B": ["Our Father, by whose name"], "C": ["I know my faith is founded"]},
+    ("Ordinary Time", "Proper 22"): {"A": ["主愛奇恩歌 (O Love, How Deep, How Broad, How High)"], "B": ["Our Father, by whose name"], "C": ["I know my faith is founded"]},
     ("Ordinary Time", "Proper 23"): {"A": ["A multitude comes from the east and the west"], "B": ["Thee will I love, my strength, my tower"], "C": ["Your hand, O Lord, in days of old"]},
     ("Ordinary Time", "Proper 24"): {"A": ["Holy God, we praise Thy name"], "B": ["Hope of the world, Thou Christ of great compassion"], "C": ["I trust, O Lord, Your holy name"]},
     ("Ordinary Time", "Proper 25"): {"A": ["I want to walk as a child of the light", "The Law of God is good and wise"], "B": ["From God can nothing move me"], "C": ["In God, my faithful God"]},
@@ -2508,7 +2508,6 @@ classical_hymns_map = {
     ("Ordinary Time", "Proper 29"): {"A": ["The Head that once was crowned with thorns"], "B": ["Lo! He comes with clouds descending"], "C": ["Lord, enthroned in heav'nly splendor"]}
 }
 
-# 使用 defaultdict(list) 確保同一天有多個事件（如守夜、正日、黃昏）時不會互相覆蓋
 web_data = defaultdict(list)
 
 for ev in all_final_events:
@@ -2544,7 +2543,6 @@ for ev in all_final_events:
     if "holy cross" in s_lower: season, sunday = "Ordinary Time", "Holy Cross"
     if "thanksgiving" in s_lower: season, sunday = "Ordinary Time", "Thanksgiving"
 
-    # 拆解 Description 內容
     parts = desc.split("今日詩歌：")
     scriptures_raw = parts[0].strip()
     
@@ -2568,8 +2566,8 @@ for ev in all_final_events:
         m_split = desc.split("節期意義：")
         meaning = m_split[1].split("\n")[0].strip()
 
-    # 古典詩歌比對
-    c_hymns = []
+    # 古典詩歌比對與 YouTube 連結生成
+    raw_c_hymns = []
     year_dict = classical_hymns_map.get((season, sunday))
     
     if not year_dict:
@@ -2583,12 +2581,24 @@ for ev in all_final_events:
 
     if year_dict:
         if current_year in year_dict:
-            c_hymns = year_dict[current_year]
+            raw_c_hymns = year_dict[current_year]
         elif "All" in year_dict:
-            c_hymns = year_dict["All"]
+            raw_c_hymns = year_dict["All"]
             
+    c_hymns = []
+    for h in raw_c_hymns:
+        # 若有中文對應（含有括號），優先用中文歌名搜尋 YouTube，否則用原英文
+        if "(" in h and ")" in h:
+            zh_title = h.split("(")[0].strip()
+            search_kw = f"聖詩 {zh_title}"
+        else:
+            search_kw = h
+            
+        yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
+        c_hymns.append(f'<a href="{yt_url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{h}</a>')
+
     if not c_hymns:
-        c_hymns = [f"⚠️ (偵錯) 字典找不到對應: (Season: {season}, Sunday: {sunday}) | 原始名稱: {raw_name}"]
+        c_hymns = []
 
     clean_scriptures = [
         s for s in scriptures_raw.split("\n") 
@@ -2610,4 +2620,4 @@ for ev in all_final_events:
 # 輸出 JSON
 with open("rcl_data.json", "w", encoding="utf-8") as f:
     json.dump(web_data, f, ensure_ascii=False, indent=2)
-print("✅ 已成功產出支援多重事件的 rcl_data.json！")
+print("✅ 已成功產出包含普天頌讚中文古典詩歌與 YouTube 連結的 rcl_data.json！")
