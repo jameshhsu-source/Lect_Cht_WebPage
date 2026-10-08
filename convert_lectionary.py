@@ -870,9 +870,8 @@ wdb_book_map = {
 }
 
 def get_scripture_links(line):
-    """將經文行拆解，並產生微讀聖經 (wdbible) 的直達連結"""
-    result_lines = [line] 
-    
+    """將經文行拆解，並在同一行產生微讀聖經 (wdbible) 的行內直達連結"""
+    sub_links = []
     # 依照 '與' 或 '或' 切割字串 (例如 "創世記 2:18-24 與 詩篇 8")
     sub_passages = re.split(r'\s*(?:與|或)\s*', line)
     
@@ -886,28 +885,25 @@ def get_scripture_links(line):
             book_zh = match.group(1)
             chapter = match.group(2)
             verses_raw = match.group(3)
-            
             wdb_code = wdb_book_map.get(book_zh)
             
-            # 如果是標準的 66 卷書
             if wdb_code:
                 url = f"https://wdbible.com/tw/bible/{wdb_code}.{chapter}.cunpt"
-                # 如果有特定的節數 (例如 7-10)，抓取第一組數字來做定錨標籤
                 if verses_raw:
                     v_match = re.search(r'\d+(?:-\d+)?', verses_raw)
                     if v_match:
                         url += f"#{v_match.group(0)}"
-                        
-                result_lines.append(f"   📖 閱讀 {book_zh}: {url}")
-                continue # 成功產生直達連結，跳過後面的搜尋退路
+                sub_links.append(f'<a href="{url}" target="_blank" style="text-decoration:none; margin-left:5px;" title="線上閱讀">📖</a>')
+                continue
                 
-        # 備案：如果解析失敗，或是遇到次經 (例如 所羅門智訓)，退回使用微讀聖經的搜尋
+        # 備案：次經或搜尋
         clean_query = re.sub(r'[\(\)]', '', sub).strip()
         fallback_url = f"https://wdbible.com/search?q={urllib.parse.quote(clean_query)}"
-        book_name = sub.split()[0] if sub else "經文"
-        result_lines.append(f"   📖 閱讀 {book_name}: {fallback_url}")
+        sub_links.append(f'<a href="{fallback_url}" target="_blank" style="text-decoration:none; margin-left:5px;" title="線上搜尋">📖</a>')
         
-    return "\n".join(result_lines)
+    # 將整行經文與行內閱讀圖示結合成同一字串
+    links_str = "".join(sub_links)
+    return f"{line}{links_str}"
 
 def replace_with_map(text: str, mapping: dict) -> str:
     """
@@ -1309,15 +1305,11 @@ def get_hymn_text(summary: str, date: datetime.date = None) -> str:
 
     if not hymns:
         return ""
-    # === 新增：將詩歌加上 YouTube 搜尋連結 (高相容性手機版) ===
+# === 將詩歌加上 YouTube 搜尋連結 (改為行內顯示) ===
     linked_hymns = []
     for h in hymns:
-        # 先確認字串裡有沒有書名號 (代表有歌名)
         if "《" in h and "》" in h:
-            # 擷取書名號內的歌名
             song_name = h.split("《")[1].split("》")[0].strip()
-            
-            # 為了手機版 YouTube App 的相容性，改用「樂團名稱 + 歌名」的全域搜尋
             if "小羊詩歌" in h:
                 search_kw = f"小羊詩歌 {song_name}"
             elif "約書亞樂團" in h:
@@ -1326,17 +1318,15 @@ def get_hymn_text(summary: str, date: datetime.date = None) -> str:
                 search_kw = f"讚美之泉 {song_name}"
             else:
                 search_kw = song_name
-                
-            # 統一使用全域搜尋，保證手機 App 也能正確帶入搜尋字串
             yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
         else:
-            # 防呆：萬一格式寫錯沒有書名號，退回整行文字的全域搜尋
             search_kw = h.replace("《", " ").replace("》", " ").replace("：", " ")
             yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
             
-        linked_hymns.append(f"{h}\n   ▶️ 點此聆聽: {yt_url}")
+        # 讓「▶️ 聆聽」按鈕緊跟在詩歌名稱後面同一行
+        linked_hymns.append(f'{h} <a href="{yt_url}" target="_blank" style="text-decoration:none; font-size:0.9em; margin-left:5px;">▶️ 聆聽</a>')
 
-    return "\n\n".join(linked_hymns)
+    return "\n".join(linked_hymns)
     
 def calculate_advent1(year: int) -> date:
     """計算某年 Advent 1：11/27–12/3 之間的第一個主日"""
