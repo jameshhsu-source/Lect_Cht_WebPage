@@ -22,7 +22,7 @@
 <body>
 
 <div class="card">
-    <h2>📖 經課與詩歌查詢</h2>
+    <h2>三代經課與詩歌查詢</h2>
     <div class="search-area">
         <input type="date" id="dateInput">
         <button onclick="handleSearch()">查詢</button>
@@ -100,12 +100,12 @@ function renderData(dateStr, data, isFallback, originalDate) {
         html += `<h3 style="margin-bottom:5px;">${dataItem.title}</h3>`;
         
         // 經文
-        html += `<div class="section-title">📜 經課經文</div><div class="data-list">`;
+        html += `<div class="section-title">經課經文</div><div class="data-list">`;
         dataItem.scriptures.forEach(item => html += `<div>${item}</div>`);
         html += `</div>`;
 
         // 古典詩歌
-        html += `<div class="section-title">⛪ 古典詩歌</div><ul class="data-list">`;
+        html += `<div class="section-title">古典詩歌</div><ul class="data-list">`;
         if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
             dataItem.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
         } else {
@@ -114,7 +114,7 @@ function renderData(dateStr, data, isFallback, originalDate) {
         html += `</ul>`;
 
         // 現代詩歌
-        html += `<div class="section-title">🎸 現代詩歌</div><ul class="data-list">`;
+        html += `<div class="section-title">現代詩歌</div><ul class="data-list">`;
         if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
             dataItem.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
         }
