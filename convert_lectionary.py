@@ -2444,9 +2444,8 @@ print(f"報告已生成: {report_file}")
 
 # === 產出 GitHub Pages 網頁專用 rcl_data.json ===
 import json
+import re
 
-# 1. 根據 PDF 建立古典詩歌字典 (僅英文，無對應則自動留白)
-# 這裡先配置最核心的節期，您後續可直接在 json 中擴充
 # 1. 根據 PDF 建立古典詩歌字典 (支援 A、B、C 年與 All 通用，已移除詩歌本編號)
 classical_hymns_map = {
     # === 將臨期與聖誕期 (Time of Christmas) ===
@@ -2561,7 +2560,7 @@ classical_hymns_map = {
     "Proper 15": {
         "A": ["In Christ there is no east or west", "When in the hour of deepest need"],
         "B": ["O God, my faithful God"],
-        "C": ["Lord, keep us steadfast in Your Word"]
+        "C": ["Lord, keep steadfast in Your Word"]
     },
     "Proper 16": {
         "A": ["Built on the Rock the Church shall stand"],
@@ -2641,9 +2640,18 @@ classical_hymns_map = {
 web_data = {}
 
 for ev in all_final_events:
-    date_str = ev["date"].strftime("%Y-%m-%d")
+    date_obj = ev["date"]
+    
+    # 確保是 date 格式
+    if hasattr(date_obj, "date"):
+        date_obj = date_obj.date()
+        
+    date_str = date_obj.strftime("%Y-%m-%d")
     raw_name = ev["name"]
     desc = ev.get("description", "")
+    
+    # ★★★ 關鍵修正：直接使用您寫好的 determine_cycle 函數判斷 A/B/C 年 ★★★
+    current_year = determine_cycle(date_obj)
     
     # 拆解 Description 內容
     parts = desc.split("今日詩歌：")
@@ -2662,27 +2670,40 @@ for ev in all_final_events:
             color = c_split[1].split("\n")[0].strip()
             bottom_part = c_split[0]
             
-        # 提取意義
-        if "節期意義：" in desc:
-            m_split = desc.split("節期意義：")
-            meaning = m_split[1].split("\n")[0].strip()
-            
         # 提取現代詩歌
         for line in bottom_part.split("\n"):
             line = line.strip()
             if line and "節期意義：" not in line and "代表顏色：" not in line:
                 modern_hymns.append(line)
+                
+    # 節期意義可能在上面也可能在下面，從完整的 desc 裡面直接切最安全
+    if "節期意義：" in desc:
+        m_split = desc.split("節期意義：")
+        meaning = m_split[1].split("\n")[0].strip()
 
-    # 比對古典詩歌
+    # 比對古典詩歌 (精準年份對應)
     c_hymns = []
-    for eng_key, hymns in classical_hymns_map.items():
-        if eng_key.lower() in raw_name.lower():
-            c_hymns = hymns
+    for eng_key, year_dict in classical_hymns_map.items():
+        pattern = r'\b' + re.escape(eng_key) + r'\b'
+        if re.search(pattern, raw_name, re.IGNORECASE):
+            if current_year in year_dict:
+                c_hymns = year_dict[current_year]
+            elif "All" in year_dict:
+                c_hymns = year_dict["All"]
             break
 
+    # 清理經文陣列中的雜訊
+    clean_scriptures = [
+        s for s in scriptures_raw.split("\n") 
+        if s.strip() and not s.startswith("節期意義：") and not s.startswith("代表顏色：")
+    ]
+
+    # 因為您有補漏機制，如果標題是 "Auto-filled (Fixed)"，改用翻譯名稱顯示
+    display_title = translate_summary(raw_name) if "Auto-filled" not in raw_name else "補進來的主日"
+
     web_data[date_str] = {
-        "title": translate_summary(raw_name), # 使用您原本寫好的中文翻譯函數
-        "scriptures": [s for s in scriptures_raw.split("\n") if s.strip()],
+        "title": display_title,
+        "scriptures": clean_scriptures,
         "classical_hymns": c_hymns,
         "modern_hymns": modern_hymns,
         "color": color,
