@@ -85,12 +85,7 @@
 
 function renderData(dateStr, data, isFallback, originalDate) {
     const alertBox = document.getElementById('alertBox');
-    if (isFallback) {
-        alertBox.style.display = 'block';
-        alertBox.innerHTML = `⚠️ ${originalDate} 當日無資料，自動顯示最近的節期：<b>${dateStr}</b>`;
-    } else {
-        alertBox.style.display = 'none';
-    }
+    alertBox.style.display = 'none';
 
     // 支援單筆或多筆事件（確保 data 是陣列）
     const events = Array.isArray(data) ? data : [data];
