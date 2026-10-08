@@ -870,40 +870,27 @@ wdb_book_map = {
 }
 
 def get_scripture_links(line):
-    """將經文行拆解，並在同一行產生微讀聖經 (wdbible) 的行內直達連結"""
-    sub_links = []
-    # 依照 '與' 或 '或' 切割字串 (例如 "創世記 2:18-24 與 詩篇 8")
-    sub_passages = re.split(r'\s*(?:與|或)\s*', line)
-    
-    for sub in sub_passages:
-        sub = sub.strip()
-        if not sub: continue
-            
-        # 嘗試解析出：書卷(中文)、章、節
-        match = re.search(r"([\u4e00-\u9fa5]+)\s*(\d+)(?::([\d\-a-z, \(\)]+))?", sub)
-        if match:
-            book_zh = match.group(1)
-            chapter = match.group(2)
-            verses_raw = match.group(3)
-            wdb_code = wdb_book_map.get(book_zh)
-            
-            if wdb_code:
-                url = f"https://wdbible.com/tw/bible/{wdb_code}.{chapter}.cunpt"
-                if verses_raw:
-                    v_match = re.search(r'\d+(?:-\d+)?', verses_raw)
-                    if v_match:
-                        url += f"#{v_match.group(0)}"
-                sub_links.append(f'<a href="{url}" target="_blank" style="text-decoration:none; margin-left:5px;" title="線上閱讀">📖</a>')
-                continue
-                
-        # 備案：次經或搜尋
-        clean_query = re.sub(r'[\(\)]', '', sub).strip()
-        fallback_url = f"https://wdbible.com/search?q={urllib.parse.quote(clean_query)}"
-        sub_links.append(f'<a href="{fallback_url}" target="_blank" style="text-decoration:none; margin-left:5px;" title="線上搜尋">📖</a>')
+    """將經文行拆解，並讓經文文字本身成為微讀聖經的超連結"""
+    def replace_match(m):
+        full_text = m.group(0)
+        book_zh = m.group(1)
+        chapter = m.group(2)
+        verses_raw = m.group(3)
+        wdb_code = wdb_book_map.get(book_zh)
         
-    # 將整行經文與行內閱讀圖示結合成同一字串
-    links_str = "".join(sub_links)
-    return f"{line}{links_str}"
+        if wdb_code:
+            url = f"https://wdbible.com/tw/bible/{wdb_code}.{chapter}.cunpt"
+            if verses_raw:
+                v_match = re.search(r'\d+(?:-\d+)?', verses_raw)
+                if v_match:
+                    url += f"#{v_match.group(0)}"
+            return f'<a href="{url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{full_text}</a>'
+        else:
+            fallback_url = f"https://wdbible.com/search?q={urllib.parse.quote(full_text)}"
+            return f'<a href="{fallback_url}" target="_blank" style="color: inherit; text-decoration: none;">{full_text}</a>'
+
+    pattern = r"([\u4e00-\u9fa5]+)\s*(\d+)(?::([\d\-a-z, \(\)]+))?"
+    return re.sub(pattern, replace_match, line)
 
 def replace_with_map(text: str, mapping: dict) -> str:
     """
@@ -1323,8 +1310,8 @@ def get_hymn_text(summary: str, date: datetime.date = None) -> str:
             search_kw = h.replace("《", " ").replace("》", " ").replace("：", " ")
             yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
             
-        # 讓「▶️ 聆聽」按鈕緊跟在詩歌名稱後面同一行
-        linked_hymns.append(f'{h} <a href="{yt_url}" target="_blank" style="text-decoration:none; font-size:0.9em; margin-left:5px;">▶️ 聆聽</a>')
+        # 讓整行詩歌文字本身成為超連結
+        linked_hymns.append(f'<a href="{yt_url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{h}</a>')
 
     return "\n".join(linked_hymns)
     
