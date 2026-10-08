@@ -2422,8 +2422,9 @@ print(f"報告已生成: {report_file}")
 # === 產出 GitHub Pages 網頁專用 rcl_data.json ===
 import json
 import re
+from collections import defaultdict
 
-# 1. 根據 (season, sunday) 建立古典詩歌字典 (完美對齊您的 parse_summary 輸出！)
+# 1. 根據 (season, sunday) 建立古典詩歌字典
 classical_hymns_map = {
     # === 將臨期與聖誕期 ===
     ("Advent", "First Sunday"): {"All": ["Savior of the nations, come"]},
@@ -2437,7 +2438,7 @@ classical_hymns_map = {
     
     # === 主顯期 ===
     ("Epiphany", "Epiphany"): {"All": ["O Morning Star, how fair and bright"]},
-    ("Epiphany", "First Sunday"): {"All": ["To Jordan came the Christ, our Lord"]}, # 洗禮日
+    ("Epiphany", "First Sunday"): {"All": ["To Jordan came the Christ, our Lord"]},
     ("Epiphany", "Second Sunday"): {"All": ["The only Son from heaven"]},
     ("Epiphany", "Third Sunday"): {"All": ["O Christ, our true and only light"]},
     ("Epiphany", "Fourth Sunday"): {"All": ["Son of God, eternal Savior"]},
@@ -2507,7 +2508,8 @@ classical_hymns_map = {
     ("Ordinary Time", "Proper 29"): {"A": ["The Head that once was crowned with thorns"], "B": ["Lo! He comes with clouds descending"], "C": ["Lord, enthroned in heav'nly splendor"]}
 }
 
-web_data = {}
+# 使用 defaultdict(list) 確保同一天有多個事件（如守夜、正日、黃昏）時不會互相覆蓋
+web_data = defaultdict(list)
 
 for ev in all_final_events:
     date_obj = ev["date"]
@@ -2518,13 +2520,10 @@ for ev in all_final_events:
     raw_name = ev["name"]
     desc = ev.get("description", "")
     
-    # 取得您寫好的精準年份 A/B/C
     current_year = determine_cycle(date_obj)
-    
-    # === 取得您寫好的 正規化節期與名稱 ===
     season, sunday, _ = parse_summary(raw_name)
     
-    # 套用跟 get_hymn_text 一模一樣的智慧路由，確保不漏接！
+    # 智慧路由邏輯
     if sunday and "Proper" in sunday: 
         season = "Ordinary Time"
     if season == "Easter" and ("Resurrection" in raw_name or "Easter Day" in raw_name or "Easter Dawn" in raw_name or "Easter Evening" in raw_name or "Easter Vigil" in raw_name): 
@@ -2545,7 +2544,7 @@ for ev in all_final_events:
     if "holy cross" in s_lower: season, sunday = "Ordinary Time", "Holy Cross"
     if "thanksgiving" in s_lower: season, sunday = "Ordinary Time", "Thanksgiving"
 
-    # 拆解 Description 內容 (保留您原有的解析邏輯)
+    # 拆解 Description 內容
     parts = desc.split("今日詩歌：")
     scriptures_raw = parts[0].strip()
     
@@ -2569,11 +2568,10 @@ for ev in all_final_events:
         m_split = desc.split("節期意義：")
         meaning = m_split[1].split("\n")[0].strip()
 
-    # ★ 終極比對：直接用 (season, sunday) 抓取古典詩歌 ★
+    # 古典詩歌比對
     c_hymns = []
     year_dict = classical_hymns_map.get((season, sunday))
     
-    # 模糊比對備案 (跟您的 get_hymn_text 邏輯完全一致)
     if not year_dict:
         sorted_items = sorted(classical_hymns_map.items(), key=lambda x: len(x[0][1] or ""), reverse=True)
         for (map_season, map_sunday), map_dict in sorted_items:
@@ -2583,14 +2581,12 @@ for ev in all_final_events:
                     year_dict = map_dict
                     break
 
-    # 取出 A/B/C 年專屬詩歌
     if year_dict:
         if current_year in year_dict:
             c_hymns = year_dict[current_year]
         elif "All" in year_dict:
             c_hymns = year_dict["All"]
             
-    # 【網頁端強力偵錯輸出】
     if not c_hymns:
         c_hymns = [f"⚠️ (偵錯) 字典找不到對應: (Season: {season}, Sunday: {sunday}) | 原始名稱: {raw_name}"]
 
@@ -2600,7 +2596,7 @@ for ev in all_final_events:
     ]
     display_title = translate_summary(raw_name) if "Auto-filled" not in raw_name else "補進來的主日"
 
-    web_data[date_str] = {
+    event_item = {
         "title": display_title,
         "scriptures": clean_scriptures,
         "classical_hymns": c_hymns,
@@ -2608,7 +2604,10 @@ for ev in all_final_events:
         "color": color,
         "meaning": meaning
     }
+    
+    web_data[date_str].append(event_item)
 
+# 輸出 JSON
 with open("rcl_data.json", "w", encoding="utf-8") as f:
     json.dump(web_data, f, ensure_ascii=False, indent=2)
-print("✅ 已成功產出網頁專用 rcl_data.json！")
+print("✅ 已成功產出支援多重事件的 rcl_data.json！")

@@ -83,26 +83,36 @@
         }
     }
 
-    function renderData(dateStr, data, isFallback, originalDate) {
-        const alertBox = document.getElementById('alertBox');
-        if (isFallback) {
-            alertBox.style.display = 'block';
-            alertBox.innerHTML = `⚠️ ${originalDate} 當日無資料，自動顯示最近的節期：<b>${dateStr}</b>`;
-        } else {
-            alertBox.style.display = 'none';
+function renderData(dateStr, data, isFallback, originalDate) {
+    const alertBox = document.getElementById('alertBox');
+    if (isFallback) {
+        alertBox.style.display = 'block';
+        alertBox.innerHTML = `⚠️ ${originalDate} 當日無資料，自動顯示最近的節期：<b>${dateStr}</b>`;
+    } else {
+        alertBox.style.display = 'none';
+    }
+
+    // 支援單筆或多筆事件（確保 data 是陣列）
+    const events = Array.isArray(data) ? data : [data];
+    let html = '';
+
+    events.forEach((dataItem, index) => {
+        // 如果同一天有多個主題，中間加一道分隔線
+        if (index > 0) {
+            html += `<hr style="margin: 30px 0; border: 0; border-top: 2px dashed #cbd5e1;">`;
         }
 
-        let html = `<h3 style="margin-bottom:5px;">${data.title}</h3>`;
+        html += `<h3 style="margin-bottom:5px;">${dataItem.title}</h3>`;
         
         // 經文
         html += `<div class="section-title">📜 經課經文</div><div class="data-list">`;
-        data.scriptures.forEach(item => html += `<div>${item}</div>`);
+        dataItem.scriptures.forEach(item => html += `<div>${item}</div>`);
         html += `</div>`;
 
         // 古典詩歌
         html += `<div class="section-title">⛪ 古典詩歌</div><ul class="data-list">`;
-        if (data.classical_hymns && data.classical_hymns.length > 0) {
-            data.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+        if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
+            dataItem.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
         } else {
             html += `<li style="color:#94a3b8; list-style:none;">(無對應古典詩歌)</li>`;
         }
@@ -110,17 +120,20 @@
 
         // 現代詩歌
         html += `<div class="section-title">🎸 現代詩歌</div><ul class="data-list">`;
-        data.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+        if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
+            dataItem.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+        }
         html += `</ul>`;
 
         // 顏色與意義
         html += `<div class="meta">`;
-        if (data.color) html += `<p><strong>代表顏色：</strong> ${data.color}</p>`;
-        if (data.meaning) html += `<p><strong>節期意義：</strong> ${data.meaning}</p>`;
+        if (dataItem.color) html += `<p><strong>代表顏色：</strong> ${dataItem.color}</p>`;
+        if (dataItem.meaning) html += `<p><strong>節期意義：</strong> ${dataItem.meaning}</p>`;
         html += `</div>`;
+    });
 
-        document.getElementById('resultContent').innerHTML = html;
-    }
+    document.getElementById('resultContent').innerHTML = html;
+}
 </script>
 
 </body>
