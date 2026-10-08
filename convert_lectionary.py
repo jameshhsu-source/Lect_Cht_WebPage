@@ -2447,24 +2447,195 @@ import json
 
 # 1. 根據 PDF 建立古典詩歌字典 (僅英文，無對應則自動留白)
 # 這裡先配置最核心的節期，您後續可直接在 json 中擴充
+# 1. 根據 PDF 建立古典詩歌字典 (支援 A、B、C 年與 All 通用，已移除詩歌本編號)
 classical_hymns_map = {
-    "First Sunday of Advent": ["Savior of the nations, come"],
-    "Second Sunday of Advent": ["On Jordan's bank the Baptist's cry", "Lo! He comes with clouds descending"],
-    "Third Sunday of Advent": ["Hark! A thrilling voice is sounding"],
-    "Fourth Sunday of Advent": ["O come, O come, Emmanuel"],
-    "Nativity of the Lord": ["Lo, how a rose e'er blooming", "We praise You, Jesus, at Your birth"],
-    "Christmas Day": ["We praise You, Jesus, at Your birth"],
-    "Epiphany of the Lord": ["O Morning Star, how fair and bright"],
-    "Baptism of the Lord": ["To Jordan came the Christ, our Lord"],
-    "Transfiguration Sunday": ["O wondrous type! O vision fair"],
-    "Ash Wednesday": ["From depths of woe I cry to Thee"],
-    "First Sunday in Lent": ["A mighty fortress is our God"],
-    "Liturgy of the Palms": ["All glory, laud, and honor"],
-    "Good Friday": ["Sing, my tongue, the glorious battle"],
-    "Resurrection of the Lord": ["Christ Jesus lay in death's strong bands"],
-    "Day of Pentecost": ["Come, Holy Ghost, God and Lord"],
-    "Trinity Sunday": ["Come, Holy Ghost, Creator blest"],
-    "Christ the King": ["The Head that once was crowned with thorns"]
+    # === 將臨期與聖誕期 (Time of Christmas) ===
+    "First Sunday in Advent": {"All": ["Savior of the nations, come"]},
+    "Second Sunday in Advent": {"All": ["On Jordan's bank the Baptist's cry"]},
+    "Third Sunday in Advent": {"All": ["Hark! A thrilling voice is sounding"]},
+    "Fourth Sunday in Advent": {"All": ["O come, O come, Emmanuel"]},
+    "Christmas Eve": {"All": ["Lo, how a rose e'er blooming"]},
+    "Christmas Midnight": {"All": ["From heav'n above to earth I come"]},
+    "Christmas Dawn": {"All": ["Come, your hearts and voices raising"]},
+    "Christmas Day": {"All": ["We praise You, Jesus, at Your birth"]},
+    "First Sunday after Christmas": {"All": ["Let all together praise our God"]},
+    "Second Sunday after Christmas": {"All": ["Within the Father's house"]},
+    "The Epiphany of Our Lord": {"All": ["O Morning Star, how fair and bright"]},
+    "The Baptism of Our Lord": {"All": ["To Jordan came the Christ, our Lord"]},
+    "Second Sunday after the Epiphany": {"All": ["The only Son from heaven"]},
+    "Third Sunday after the Epiphany": {"All": ["O Christ, our true and only light"]},
+    "Fourth Sunday after the Epiphany": {"All": ["Son of God, eternal Savior"]},
+    "Fifth Sunday after the Epiphany": {
+        "A": ["Thy strong word did cleave the darkness"],
+        "B": ["Hail to the Lord's anointed"],
+        "C": ["Hail to the Lord's anointed"]
+    },
+    "Sixth Sunday after the Epiphany": {"All": ["Songs of thankfulness and praise"]},
+    "Seventh Sunday after the Epiphany": {"All": ["My soul, now praise your Maker", "O God, O Lord of heaven and earth"]},
+    "Eighth Sunday after the Epiphany": {"All": ["Sing praise to God, the highest good"]},
+    "The Transfiguration of Our Lord": {"All": ["O wondrous type! O vision fair"]},
+
+    # === 預苦期與復活期 (Time of Easter) ===
+    "Ash Wednesday": {"All": ["From depths of woe I cry to Thee"]},
+    "First Sunday in Lent": {"All": ["A mighty fortress is our God"]},
+    "Second Sunday in Lent": {"All": ["Lord, Thee I love with all my heart"]},
+    "Third Sunday in Lent": {"All": ["May God bestow on us His grace"]},
+    "Fourth Sunday in Lent": {"All": ["God loved the world so that He gave", "I trust, O Christ, in You alone"]},
+    "Fifth Sunday in Lent": {"All": ["My song is love unknown"]},
+    "Palm Sunday": {"All": ["All glory, laud, and honor", "A Lamb goes uncomplaining forth"]},
+    "Holy (Maundy) Thursday": {"All": ["O Lord, we praise Thee"]},
+    "Good Friday": {"All": ["Sing, my tongue, the glorious battle"]},
+    "The Resurrection of Our Lord": {"All": ["Awake, my heart, with gladness", "Christ Jesus lay in death's strong bands"]},
+    "Second Sunday of Easter": {"All": ["O sons and daughters of the King"]},
+    "Third Sunday of Easter": {"All": ["With high delight let us unite"]},
+    "Fourth Sunday of Easter": {"All": ["The King of love my shepherd is"]},
+    "Fifth Sunday of Easter": {"All": ["At the Lamb's high feast we sing"]},
+    "Sixth Sunday of Easter": {"All": ["Dear Christians, one and all, rejoice"]},
+    "The Ascension of Our Lord": {"All": ["Up through endless ranks of angels"]},
+    "Seventh Sunday of Easter": {"All": ["Christ is the world's Redeemer"]},
+    "The Day of Pentecost": {"All": ["Come, Holy Ghost, God and Lord"]},
+    "The Holy Trinity": {"All": ["Come, Holy Ghost, Creator blest"]},
+
+    # === 常年期 (Time of the Church - Three-Year Lectionary) ===
+    "Proper 3": {
+        "A": ["All depends on our possessing"],
+        "B": ["Sing praise to God, the highest good"],
+        "C": ["O God, my faithful God"]
+    },
+    "Proper 4": {
+        "A": ["To God the Holy Spirit let us pray"],
+        "B": ["O day of rest and gladness"],
+        "C": ["In the very midst of life"]
+    },
+    "Proper 5": {
+        "A": ["Let me be Thine forever"],
+        "B": ["Rise! To arms! With prayer employ you"],
+        "C": ["When in the hour of deepest need"]
+    },
+    "Proper 6": {
+        "All": ["O God, O Lord of heaven and earth"],
+        "A": ["God loved the world so that He gave", "O God, O Lord of heaven and earth"],
+        "B": ["Creator Spirit, by whose aid", "O God, O Lord of heaven and earth"],
+        "C": ["Today Your mercy calls us", "O God, O Lord of heaven and earth"]
+    },
+    "Proper 7": {
+        "A": ["Lord of our life and God of our salvation"],
+        "B": ["Evening and morning"],
+        "C": ["Rise, shine, you people"]
+    },
+    "Proper 8": {
+        "A": ["Let us ever walk with Jesus"],
+        "B": ["In the very midst of life"],
+        "C": ["\"Come, follow Me,\" the Savior spake"]
+    },
+    "Proper 9": {
+        "A": ["I heard the voice of Jesus say"],
+        "B": ["O Christ, our true and only light"],
+        "C": ["Jesus has come and brings pleasure eternal"]
+    },
+    "Proper 10": {
+        "A": ["Almighty God, Your Word is cast"],
+        "B": ["Jesus, priceless treasure"],
+        "C": ["Where charity and love prevail"]
+    },
+    "Proper 11": {
+        "A": ["In holy conversation"],
+        "B": ["The Church's one foundation"],
+        "C": ["One thing's needful; Lord, this treasure"]
+    },
+    "Proper 12": {
+        "A": ["From God can nothing move me"],
+        "B": ["Entrust your days and burdens"],
+        "C": ["Our Father, who from heav'n above"]
+    },
+    "Proper 13": {
+        "A": ["O living Bread from heaven"],
+        "B": ["Guide me, O Thou great Redeemer"],
+        "C": ["Gracious God, You send great blessings"]
+    },
+    "Proper 14": {
+        "A": ["Eternal Father, strong to save"],
+        "B": ["Lord, enthroned in heav'nly splendor"],
+        "C": ["O little flock, fear not the foe"]
+    },
+    "Proper 15": {
+        "A": ["In Christ there is no east or west", "When in the hour of deepest need"],
+        "B": ["O God, my faithful God"],
+        "C": ["Lord, keep us steadfast in Your Word"]
+    },
+    "Proper 16": {
+        "A": ["Built on the Rock the Church shall stand"],
+        "B": ["Lord, help us ever to retain"],
+        "C": ["A multitude comes from the east and the west"]
+    },
+    "Proper 17": {
+        "A": ["Hail, Thou once despised Jesus"],
+        "B": ["By grace I'm saved, grace free and boundless"],
+        "C": ["Son of God, eternal Savior"]
+    },
+    "Proper 18": {
+        "A": ["My soul, now praise your Maker"],
+        "B": ["Praise the Almighty, my soul, adore Him"],
+        "C": ["How clear is our vocation, Lord"]
+    },
+    "Proper 19": {
+        "A": ["Come down, O Love divine"],
+        "B": ["Praise the One who breaks the darkness"],
+        "C": ["Jesus sinners doth receive"]
+    },
+    "Proper 20": {
+        "A": ["Salvation unto us has come"],
+        "B": ["Lord of glory, You have bought us"],
+        "C": ["Seek where you may to find a way"]
+    },
+    "Proper 21": {
+        "A": ["Lord, keep us steadfast in Your Word"],
+        "B": ["Triune God, be Thou our stay"],
+        "C": ["Lord, Thee I love with all my heart"]
+    },
+    "Proper 22": {
+        "A": ["O love, how deep, how broad, how high"],
+        "B": ["Our Father, by whose name"],
+        "C": ["I know my faith is founded"]
+    },
+    "Proper 23": {
+        "A": ["A multitude comes from the east and the west"],
+        "B": ["Thee will I love, my strength, my tower"],
+        "C": ["Your hand, O Lord, in days of old"]
+    },
+    "Proper 24": {
+        "A": ["Holy God, we praise Thy name"],
+        "B": ["Hope of the world, Thou Christ of great compassion"],
+        "C": ["I trust, O Lord, Your holy name"]
+    },
+    "Proper 25": {
+        "A": ["I want to walk as a child of the light", "The Law of God is good and wise"],
+        "B": ["From God can nothing move me"],
+        "C": ["In God, my faithful God"]
+    },
+    "Proper 26": {
+        "A": ["Lord Jesus Christ, with us abide"],
+        "B": ["O God of mercy, God of might"],
+        "C": ["How firm a foundation, O saints of the Lord"]
+    },
+    "Proper 27": {
+        "A": ["Wake, awake, for night is flying"],
+        "B": ["Lord of all hopefulness"],
+        "C": ["From God can nothing move me"]
+    },
+    "Proper 28": {
+        "All": ["The day is surely drawing near"]
+    },
+    "Proper 29": {
+        "A": ["The Head that once was crowned with thorns"],
+        "B": ["Lo! He comes with clouds descending"],
+        "C": ["Lord, enthroned in heav'nly splendor"]
+    },
+    
+    # === 常見節日與慶典 (Feasts and Festivals) ===
+    "Reformation Day": {"All": ["A mighty fortress is our God", "Salvation unto us has come"]},
+    "All Saints' Day": {"All": ["For all the saints who from their labors rest"]},
+    "Holy Cross Day": {"All": ["Sing, my tongue, the glorious battle", "The royal banners forward go"]}
 }
 
 web_data = {}
