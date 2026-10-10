@@ -33,6 +33,7 @@
 
 <script>
     let lectionaryData = {};
+    let loadedYears = new Set(); // 紀錄已經載入過哪些年份，避免重複下載
 
     // 處理時區，取得本地 YYYY-MM-DD
     function getLocalDateString(dateObj) {
@@ -40,33 +41,59 @@
         return new Date(dateObj - tzOffset).toISOString().split('T')[0];
     }
 
-    window.onload = function() {
-        const todayStr = getLocalDateString(new Date());
+    // 核心優化：非同步載入特定年份的資料
+    async function loadYearDataIfNeeded(year) {
+        if (loadedYears.has(year)) return; // 已經載入過就跳過，瞬間讀取
+        
+        try {
+            // 讀取對應年份的小檔案
+            const response = await fetch(`rcl_data_yearly/rcl_data_${year}.json`);
+            if (response.ok) {
+                const data = await response.json();
+                // 將新載入的年份資料合併進大字典中
+                Object.assign(lectionaryData, data);
+                loadedYears.add(year);
+            } else {
+                console.warn(`找不到 ${year} 年的資料檔案`);
+            }
+        } catch (error) {
+            console.error(`載入 ${year} 年資料失敗`, error);
+        }
+    }
+
+    window.onload = async function() {
+        const todayObj = new Date();
+        const todayStr = getLocalDateString(todayObj);
         document.getElementById('dateInput').value = todayStr;
+        
+        // 顯示載入中提示
+        document.getElementById('resultContent').innerHTML = "<p>資料庫載入中...</p>";
 
-        fetch('rcl_data.json')
-            .then(response => response.json())
-            .then(data => {
-                lectionaryData = data;
-                findClosestData(todayStr);
-            })
-            .catch(error => {
-                document.getElementById('resultContent').innerHTML = "資料庫載入失敗，請確認 rcl_data.json 是否存在。";
-            });
+        // 啟動搜尋 (現在改為 async，會自動判斷要抓哪一年的檔案)
+        await findClosestDataAsync(todayStr);
     }
 
-    function handleSearch() {
+    async function handleSearch() {
         const targetDate = document.getElementById('dateInput').value;
-        if(targetDate) findClosestData(targetDate);
+        if(targetDate) {
+            document.getElementById('resultContent').innerHTML = "<p>資料庫載入中...</p>";
+            await findClosestDataAsync(targetDate);
+        }
     }
 
-    function findClosestData(targetDateStr) {
+    // 改為 Async (非同步) 版本，支援動態抓檔與跨年份搜尋
+    async function findClosestDataAsync(targetDateStr) {
         let currentDate = new Date(targetDateStr);
         let found = false;
         let lookbackDays = 0;
 
         // 最多往前找 30 天
         while (lookbackDays < 30) {
+            let currentYear = currentDate.getFullYear();
+            
+            // 確保當前迴圈的「年份」已經載入 (若跨年會自動去抓上一年的檔案)
+            await loadYearDataIfNeeded(currentYear);
+
             let searchStr = getLocalDateString(currentDate);
             if (lectionaryData[searchStr]) {
                 renderData(searchStr, lectionaryData[searchStr], lookbackDays > 0, targetDateStr);
@@ -78,57 +105,53 @@
         }
 
         if (!found) {
-            document.getElementById('alertBox').style.display = 'none';
+            const alertBox = document.getElementById('alertBox');
+            if (alertBox) alertBox.style.display = 'none';
             document.getElementById('resultContent').innerHTML = "<p>找不到該日期或相近的節期資料。</p>";
         }
     }
 
-function renderData(dateStr, data, isFallback, originalDate) {
-    const alertBox = document.getElementById('alertBox');
-    alertBox.style.display = 'none';
+    // 您的 UI 渲染邏輯完全不變
+    function renderData(dateStr, data, isFallback, originalDate) {
+        const alertBox = document.getElementById('alertBox');
+        if (alertBox) alertBox.style.display = 'none';
 
-    // 支援單筆或多筆事件（確保 data 是陣列）
-    const events = Array.isArray(data) ? data : [data];
-    let html = '';
+        const events = Array.isArray(data) ? data : [data];
+        let html = '';
 
-    events.forEach((dataItem, index) => {
-        // 如果同一天有多個主題，中間加一道分隔線
-        if (index > 0) {
-            html += `<hr style="margin: 30px 0; border: 0; border-top: 2px dashed #cbd5e1;">`;
-        }
+        events.forEach((dataItem, index) => {
+            if (index > 0) {
+                html += `<hr style="margin: 30px 0; border: 0; border-top: 2px dashed #cbd5e1;">`;
+            }
 
-        html += `<h3 style="margin-bottom:5px;">${dataItem.title}</h3>`;
-        
-        // 經文
-        html += `<div class="section-title">經課經文</div><div class="data-list">`;
-        dataItem.scriptures.forEach(item => html += `<div>${item}</div>`);
-        html += `</div>`;
+            html += `<h3 style="margin-bottom:5px;">${dataItem.title}</h3>`;
+            
+            html += `<div class="section-title">經課經文</div><div class="data-list">`;
+            dataItem.scriptures.forEach(item => html += `<div>${item}</div>`);
+            html += `</div>`;
 
-        // 古典詩歌
-        html += `<div class="section-title">古典詩歌</div><ul class="data-list">`;
-        if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
-            dataItem.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
-        } else {
-            html += `<li style="color:#94a3b8; list-style:none;">(無對應古典詩歌)</li>`;
-        }
-        html += `</ul>`;
+            html += `<div class="section-title">古典詩歌</div><ul class="data-list">`;
+            if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
+                dataItem.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+            } else {
+                html += `<li style="color:#94a3b8; list-style:none;">(無對應古典詩歌)</li>`;
+            }
+            html += `</ul>`;
 
-        // 現代詩歌
-        html += `<div class="section-title">現代詩歌</div><ul class="data-list">`;
-        if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
-            dataItem.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
-        }
-        html += `</ul>`;
+            html += `<div class="section-title">現代詩歌</div><ul class="data-list">`;
+            if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
+                dataItem.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+            }
+            html += `</ul>`;
 
-        // 顏色與意義
-        html += `<div class="meta">`;
-        if (dataItem.color) html += `<p><strong>代表顏色：</strong> ${dataItem.color}</p>`;
-        if (dataItem.meaning) html += `<p><strong>節期意義：</strong> ${dataItem.meaning}</p>`;
-        html += `</div>`;
-    });
+            html += `<div class="meta">`;
+            if (dataItem.color) html += `<p><strong>代表顏色：</strong> ${dataItem.color}</p>`;
+            if (dataItem.meaning) html += `<p><strong>節期意義：</strong> ${dataItem.meaning}</p>`;
+            html += `</div>`;
+        });
 
-    document.getElementById('resultContent').innerHTML = html;
-}
+        document.getElementById('resultContent').innerHTML = html;
+    }
 </script>
 
 </body>

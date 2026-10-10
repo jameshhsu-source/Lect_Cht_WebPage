@@ -1301,7 +1301,7 @@ for yr in range(START_YEAR, END_YEAR + 2):
 # =====================================================================
 # 4. JSON 網頁資料輸出區 (Web JSON Generation)
 # =====================================================================
-print("🌐 準備輸出網頁專用 rcl_data.json ...")
+print("🌐 準備輸出網頁專用 rcl_data_YYYY.json ...")
 
 classical_hymns_map = {
     ("Advent", "First Sunday"): {"All": ["Savior of the nations, come"]},
@@ -1467,7 +1467,24 @@ for ev in all_final_events:
     
     web_data[date_str].append(event_item)
 
-with open("rcl_data.json", "w", encoding="utf-8") as f:
-    json.dump(web_data, f, ensure_ascii=False, indent=2)
+import os
 
-print("rcl_data.json 已成功產出！")
+# 建立一個資料夾來放這些分區檔案 (避免檔案太亂)
+output_dir = "rcl_data_yearly"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# 1. 將資料按「年份」進行分組 (Data Partitioning)
+yearly_web_data = defaultdict(dict)
+for date_str, events in web_data.items():
+    year = date_str[:4] # 擷取 '2026-10-10' 的前四碼年份
+    yearly_web_data[year][date_str] = events
+
+# 2. 輸出成分年份的小檔案，並移除 indent 來壓縮體積 (Minify)
+for year, data_for_year in yearly_web_data.items():
+    file_path = os.path.join(output_dir, f"rcl_data_{year}.json")
+    with open(file_path, "w", encoding="utf-8") as f:
+         # 拿掉 indent=2，讓 JSON 變成單行，大幅減少檔案體積與解析時間
+        json.dump(data_for_year, f, ensure_ascii=False)
+
+print("rcl data yealy 已成功產出！")
