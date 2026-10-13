@@ -289,14 +289,13 @@ hymn_map = {
     ("Advent", "Fourth Sunday"): ["約書亞樂團：相信擁抱", "讚美之泉：深深地敬拜", "小羊詩歌：新婦的祈禱"],
     ("Advent", None): ["約書亞樂團：抓住永恆", "讚美之泉：恢復敬拜", "小羊詩歌：奇妙的預備"],
     # Christmas
-    ("Christmas", "Christmas Eve"): ["約書亞樂團：台北的聖誕節", "讚美之泉：我們歡慶聖誕", "小羊詩歌：彌賽亞"],
-    ("Christmas", "Christmas Day"): ["約書亞樂團：榮美的救主", "讚美之泉：是耶穌的名", "小羊詩歌：祂的兒子"],
-    ("Christmas", "First Sunday"): ["約書亞樂團：這是真愛", "讚美之泉：最大的福分", "小羊詩歌：耶穌,萬名之上的名"],
-    ("Christmas", "Second Sunday"): ["約書亞樂團：找到我", "讚美之泉：I Will Sing Hallelujah [我要唱哈利路亞]", "小羊詩歌：你們要讚美耶和華"],
-    ("Christmas", "Third Sunday"): ["約書亞樂團：天父祢都看顧", "讚美之泉：天父祢愛我", "小羊詩歌：耶穌基督是主"],
-    ("Christmas", "Fourth Sunday"): ["約書亞樂團：大過一切的愛", "讚美之泉：是祢，耶穌", "小羊詩歌：榮耀都歸神羔羊"],
-    ("Christmas", None): ["約書亞樂團：就這樣沉浸在祢愛中", "讚美之泉：大山可以挪開", "小羊詩歌：祢是配"],
-    # Epiphany
+    ("Christmas", "Christmas Eve"): ["約書亞樂團：台北的聖誕節", "讚美之泉：我們歡慶聖誕", "小羊詩歌：彌賽亞", "柯悅敏隱藏：平安夜", "柯悅敏隱藏：夜半歌聲", "柯悅敏隱藏：明月寒星"],
+    ("Christmas", "Christmas Day"): ["約書亞樂團：榮美的救主", "讚美之泉：是耶穌的名", "小羊詩歌：祂的兒子", "柯悅敏隱藏：普世歡騰／聽啊，天使高聲唱", "柯悅敏隱藏：小伯利恆／馬槽歌"],
+    ("Christmas", "First Sunday"): ["約書亞樂團：這是真愛", "讚美之泉：最大的福分", "小羊詩歌：耶穌,萬名之上的名", "柯悅敏隱藏：最美麗聖名", "柯悅敏隱藏：齊來，宗主信徒"],
+    ("Christmas", "Second Sunday"): ["約書亞樂團：找到我", "讚美之泉：I Will Sing Hallelujah [我要唱哈利路亞]", "小羊詩歌：你們要讚美耶和華", "柯悅敏隱藏：到各山嶺去傳揚／請聽天使在高唱", "柯悅敏隱藏：牧人聞信"],
+    ("Christmas", "Third Sunday"): ["約書亞樂團：天父祢都看顧", "讚美之泉：天父祢愛我", "小羊詩歌：耶穌基督是主", "柯悅敏隱藏：是何嬰孩", "柯悅敏隱藏：東方三博士"],
+    ("Christmas", "Fourth Sunday"): ["約書亞樂團：大過一切的愛", "讚美之泉：是祢，耶穌", "小羊詩歌：榮耀都歸神羔羊", "柯悅敏隱藏：聖誕佳音", "柯悅敏隱藏：聖誕明星／鈴在搖，鐘在響"],
+    ("Christmas", None): ["約書亞樂團：就這樣沉浸在祢愛中", "讚美之泉：大山可以挪開", "小羊詩歌：祢是配", "柯悅敏隱藏：以馬內利，求主來降臨"],  # Epiphany
     ("Epiphany", "Epiphany"): ["約書亞樂團：我神真偉大", "讚美之泉：榮耀至高神", "小羊詩歌：萬民同來敬拜"],
     ("Epiphany", "First Sunday"): ["約書亞樂團：榮美輝煌", "讚美之泉：榮耀榮耀榮耀", "小羊詩歌：願祢的國降臨"],
     ("Epiphany", "Second Sunday"): ["約書亞樂團：主祢是我們的太陽", "讚美之泉：Holy, Holy [聖潔榮耀主]", "小羊詩歌：我是祢所造"],
@@ -798,11 +797,16 @@ def get_hymn_text(summary: str, date: datetime.date = None) -> str:
     # === 將詩歌加上 YouTube 搜尋連結 (改為行內顯示) ===
     linked_hymns = []
     for h in hymns:
-        # 直接把 "約書亞樂團：竭力追求" 的冒號變空白，作為 YouTube 搜尋關鍵字
-        search_kw = h.replace("：", " ") 
+        # 新增判斷：如果是設定為隱藏歌手名字的詩歌
+        if h.startswith("柯悅敏隱藏："):
+            display_name = h.replace("柯悅敏隱藏：", "") # 網頁上只顯示歌名
+            search_kw = "柯悅敏 " + display_name # YouTube 搜尋帶入歌手名
+        else:
+            display_name = h
+            search_kw = h.replace("：", " ") 
         
         yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
-        linked_hymns.append(f'<a href="{yt_url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{h}</a>')
+        linked_hymns.append(f'<a href="{yt_url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{display_name}</a>')
 
     return "\n".join(linked_hymns)
     
