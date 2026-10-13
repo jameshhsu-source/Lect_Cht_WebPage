@@ -89,35 +89,55 @@
         }
     }
 
-    // 改為 Async (非同步) 版本，支援動態抓檔與跨年份搜尋
-    async function findClosestDataAsync(targetDateStr) {
-        let currentDate = new Date(targetDateStr);
-        let found = false;
-        let lookbackDays = 0;
+	// 修改後的搜尋邏輯：優先檢查當日節期，若無資料才強制尋找最近的主日
+	async function findClosestDataAsync(targetDateStr) {
+		let currentDate = new Date(targetDateStr);
+		let currentYear = currentDate.getFullYear();
+		
+		// 1. 先確保當前年份的資料庫已經載入
+		await loadYearDataIfNeeded(currentYear);
 
-        // 最多往前找 30 天
-        while (lookbackDays < 30) {
-            let currentYear = currentDate.getFullYear();
-            
-            // 確保當前迴圈的「年份」已經載入 (若跨年會自動去抓上一年的檔案)
-            await loadYearDataIfNeeded(currentYear);
+		// 2. 【核心邏輯】：先檢查「當天」在資料庫裡有沒有資料？
+		// 如果 JSON 裡面有這天的資料，代表這天剛好是主日，或者是重大週間節日（如聖誕節、聖灰日等）
+		if (lectionaryData[targetDateStr]) {
+			// 有資料就直接顯示，不往前回推！
+			renderData(targetDateStr, lectionaryData[targetDateStr], false, targetDateStr);
+			return; 
+		}
 
-            let searchStr = getLocalDateString(currentDate);
-            if (lectionaryData[searchStr]) {
-                renderData(searchStr, lectionaryData[searchStr], lookbackDays > 0, targetDateStr);
-                found = true;
-                break;
-            }
-            currentDate.setDate(currentDate.getDate() - 1);
-            lookbackDays++;
-        }
+		// 3. 如果當天「不是」節日或主日（JSON 裡面沒資料），我們才開始「強制退回最近的主日」
+		let dayOfWeek = currentDate.getDay(); // 0 是週日, 1-6 是週一到週六
+		let diffToSunday = dayOfWeek === 0 ? 0 : dayOfWeek; 
+		currentDate.setDate(currentDate.getDate() - diffToSunday);
 
-        if (!found) {
-            const alertBox = document.getElementById('alertBox');
-            if (alertBox) alertBox.style.display = 'none';
-            document.getElementById('resultContent').innerHTML = "<p>找不到該日期或相近的節期資料。</p>";
-        }
-    }
+		let found = false;
+		let lookbackDays = 0;
+
+		// 每次往前推 7 天（確保接下來抓到的全都是主日）
+		while (lookbackDays < 35) { // 最多找 5 個禮拜
+			let loopYear = currentDate.getFullYear();
+			
+			// 確保跨年的年份資料已載入
+			await loadYearDataIfNeeded(loopYear);
+
+			let searchStr = getLocalDateString(currentDate);
+			if (lectionaryData[searchStr]) {
+				renderData(searchStr, lectionaryData[searchStr], true, targetDateStr);
+				found = true;
+				break;
+			}
+			
+			// 繼續往前推一個禮拜
+			currentDate.setDate(currentDate.getDate() - 7);
+			lookbackDays += 7;
+		}
+
+		if (!found) {
+			const alertBox = document.getElementById('alertBox');
+			if (alertBox) alertBox.style.display = 'none';
+			document.getElementById('resultContent').innerHTML = "<p>找不到該日期或相近的經課資料。</p>";
+		}
+	}
 
     // 您的 UI 渲染邏輯完全不變
     function renderData(dateStr, data, isFallback, originalDate) {
