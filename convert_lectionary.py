@@ -1494,7 +1494,8 @@ for ev in all_final_events:
         "classical_hymns": c_hymns,
         "modern_hymns": modern_hymns,
         "color": color,
-        "meaning": meaning
+        "meaning": meaning,
+        "season": season
     }
     
     web_data[date_str].append(event_item)
