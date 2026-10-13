@@ -1271,35 +1271,68 @@ for church_year in range(2028, END_YEAR+2):
              
         curr_sun += timedelta(days=7)     
 
-# --- (C) 生成 100 年專屬聖誕節 ---
+# --- (C) 生成 100 年專屬平安夜與聖誕節 ---
 for yr in range(START_YEAR, END_YEAR + 2):
-    dt = datetime.date(yr, 12, 25)
-    cycle_label = determine_cycle(dt) 
-    season, sunday = "Christmas", "Christmas Day"
+    # === 1. 生成 12/24 平安夜 ===
+    dt_eve = datetime.date(yr, 12, 24)
+    cycle_label_eve = determine_cycle(dt_eve) 
+    season_eve, sunday_eve = "Christmas", "Christmas Eve"
     
-    scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
-    processed_lines = []
-    for line in scripture_lines:
+    # 經文與聖誕節一模一樣，所以強制去抓 (Christmas Day) 的經文
+    scripture_lines_eve = scripture_patch.get(cycle_label_eve, {}).get(("Christmas", "Christmas Day"), [])
+    processed_lines_eve = []
+    for line in scripture_lines_eve:
         if not line: continue
         if re.search(r'\d', line) and not line.startswith("【"):
-            processed_lines.append(get_scripture_links(line))
+            processed_lines_eve.append(get_scripture_links(line))
         else:
-            processed_lines.append(line)
+            processed_lines_eve.append(line)
             
-    desc_body = "\n\n".join(processed_lines)
-    hymn_text = get_hymn_text(sunday, dt)
-    description = desc_body + ("\n\n今日詩歌：\n" + hymn_text if hymn_text else "")
+    desc_body_eve = "\n\n".join(processed_lines_eve)
+    # 詩歌會自動抓到 hymn_map 裡面的 Christmas Eve
+    hymn_text_eve = get_hymn_text(sunday_eve, dt_eve)
+    description_eve = desc_body_eve + ("\n\n今日詩歌：\n" + hymn_text_eve if hymn_text_eve else "")
     
-    color_str = get_liturgical_color(season, sunday)
-    if color_str: description += f"\n\n代表顏色：{color_str}"
-    meaning_str = season_meaning_map.get(season, "")
-    if meaning_str: description += f"\n節期意義：{meaning_str}"
+    color_str_eve = get_liturgical_color(season_eve, sunday_eve)
+    if color_str_eve: description_eve += f"\n\n代表顏色：{color_str_eve}"
+    meaning_str_eve = season_meaning_map.get(season_eve, "")
+    if meaning_str_eve: description_eve += f"\n節期意義：{meaning_str_eve}"
         
     all_final_events.append({
-        "date": dt, 
+        "date": dt_eve, 
+        "name": "Christmas Eve", 
+        "source": "generated", 
+        "description": description_eve
+    })
+
+    # === 2. 生成 12/25 聖誕節 ===
+    dt_day = datetime.date(yr, 12, 25)
+    cycle_label_day = determine_cycle(dt_day) 
+    season_day, sunday_day = "Christmas", "Christmas Day"
+    
+    scripture_lines_day = scripture_patch.get(cycle_label_day, {}).get((season_day, sunday_day), [])
+    processed_lines_day = []
+    for line in scripture_lines_day:
+        if not line: continue
+        if re.search(r'\d', line) and not line.startswith("【"):
+            processed_lines_day.append(get_scripture_links(line))
+        else:
+            processed_lines_day.append(line)
+            
+    desc_body_day = "\n\n".join(processed_lines_day)
+    hymn_text_day = get_hymn_text(sunday_day, dt_day)
+    description_day = desc_body_day + ("\n\n今日詩歌：\n" + hymn_text_day if hymn_text_day else "")
+    
+    color_str_day = get_liturgical_color(season_day, sunday_day)
+    if color_str_day: description_day += f"\n\n代表顏色：{color_str_day}"
+    meaning_str_day = season_meaning_map.get(season_day, "")
+    if meaning_str_day: description_day += f"\n節期意義：{meaning_str_day}"
+        
+    all_final_events.append({
+        "date": dt_day, 
         "name": "Christmas Day", 
         "source": "generated", 
-        "description": description
+        "description": description_day
     })
 
 # =====================================================================
