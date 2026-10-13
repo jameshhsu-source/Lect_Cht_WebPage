@@ -158,19 +158,27 @@
             dataItem.scriptures.forEach(item => html += `<div>${item}</div>`);
             html += `</div>`;
 
-            html += `<div class="section-title">古典詩歌</div><ul class="data-list">`;
-            if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
-                dataItem.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
-            } else {
-                html += `<li style="color:#94a3b8; list-style:none;">(無對應古典詩歌)</li>`;
-            }
-            html += `</ul>`;
+        html += `<div class="section-title">詩歌</div><ul class="data-list">`;
+        
+        let hasHymns = false;
 
-            html += `<div class="section-title">現代詩歌</div><ul class="data-list">`;
-            if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
-                dataItem.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
-            }
-            html += `</ul>`;
+        // 1. 先列出古典詩歌
+        if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
+            dataItem.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+            hasHymns = true;
+        }
+        
+        // 2. 接著列出現代詩歌
+        if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
+            dataItem.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
+            hasHymns = true;
+        }
+
+        // 3. 若兩者皆無，顯示提示
+        if (!hasHymns) {
+            html += `<li style="color:#94a3b8; list-style:none;">(無對應詩歌)</li>`;
+        }
+        html += `</ul>`;
 
             html += `<div class="meta">`;
             if (dataItem.color) html += `<p><strong>代表顏色：</strong> ${dataItem.color}</p>`;
