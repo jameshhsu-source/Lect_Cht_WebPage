@@ -657,28 +657,6 @@ def get_scripture_links(line):
     pattern = r"([\u4e00-\u9fa5]+)\s*(\d+)(?::([\d\-a-z, \(\)]+))?"
     return re.sub(pattern, replace_match, line)
     
-def get_scripture_links(line):
-    def replace_match(m):
-        full_text = m.group(0)
-        book_zh = m.group(1)
-        chapter = m.group(2)
-        verses_raw = m.group(3)
-        wdb_code = wdb_book_map.get(book_zh)
-        
-        if wdb_code:
-            url = f"https://wdbible.com/tw/bible/{wdb_code}.{chapter}.cunpt"
-            if verses_raw:
-                v_match = re.search(r'\d+(?:-\d+)?', verses_raw)
-                if v_match:
-                    url += f"#{v_match.group(0)}"
-            return f'<a href="{url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{full_text}</a>'
-        else:
-            fallback_url = f"https://wdbible.com/search?q={urllib.parse.quote(full_text)}"
-            return f'<a href="{fallback_url}" target="_blank" style="color: inherit; text-decoration: none;">{full_text}</a>'
-
-    pattern = r"([\u4e00-\u9fa5]+)\s*(\d+)(?::([\d\-a-z, \(\)]+))?"
-    return re.sub(pattern, replace_match, line)
-
 def replace_with_map(text: str, mapping: dict) -> str:
     text = text.strip()
     for eng, zh in sorted(mapping.items(), key=lambda x: len(x[0]), reverse=True):
