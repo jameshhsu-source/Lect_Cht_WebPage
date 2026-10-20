@@ -416,6 +416,12 @@ scripture_patch = {
         ("Ordinary Time", "Thanksgiving"): ["申命記 8:7-18", "詩篇 65", "哥林多後書 9:6-15", "路加福音 17:11-19"],
         ("Ordinary Time", "All Saints"): ["啟示錄 7:9-17", "詩篇 34:1-10, 22", "約翰一書 3:1-3", "馬太福音 5:1-12"],
         ("Ordinary Time", "Reformation"): ["耶利米書 31:31-34", "詩篇 46", "羅馬書 3:19-28", "約翰福音 8:31-36"],
+        # === 補充固定特殊節日 (甲乙丙三年共用) ===
+        ("Epiphany", "Presentation"): ["瑪拉基書 3:1-4", "詩篇 84 或 詩篇 24:7-10", "希伯來書 2:14-18", "路加福音 2:22-40"],
+        ("Lent", "Annunciation"): ["以賽亞書 7:10-14", "詩篇 45 或 詩篇 40:5-10", "希伯來書 10:4-10", "路加福音 1:26-38"],
+        ("Easter", "Visitation"): ["撒母耳記上 2:1-10", "詩篇 113", "羅馬書 12:9-16b", "路加福音 1:39-57"],
+        ("Easter", "Easter Evening"): ["以賽亞書 25:6-9", "詩篇 114", "哥林多前書 5:6b-8", "路加福音 24:13-49"],
+        ("Ordinary Time", "Holy Cross"): ["民數記 21:4b-9", "詩篇 98:1-5 或 詩篇 78:1-2, 34-38", "哥林多前書 1:18-24", "約翰福音 3:13-17"],
         # === 將臨期 Advent ===
         ("Advent", "First Sunday"): ["以賽亞書 2:1-5", "詩篇 122", "羅馬書 13:11-14", "馬太福音 24:36-44"],
         ("Advent", "Second Sunday"): ["以賽亞書 11:1-10", "詩篇 72:1-7, 18-19", "羅馬書 15:4-13", "馬太福音 3:1-12"],
@@ -600,6 +606,12 @@ scripture_patch = {
         ("Ordinary Time", "Thanksgiving"): ["約珥書 2:21-27", "詩篇 126", "提摩太前書 2:1-7", "馬太福音 6:25-33"],
         ("Ordinary Time", "All Saints"): ["所羅門智訓 3:1-9 或 以賽亞書 25:6-9", "詩篇 24", "啟示錄 21:1-6a", "約翰福音 11:32-44"],
         ("Ordinary Time", "Reformation"): ["耶利米書 31:31-34", "詩篇 46", "羅馬書 3:19-28", "約翰福音 8:31-36"],
+        # === 補充固定特殊節日 (甲乙丙三年共用) ===
+        ("Epiphany", "Presentation"): ["瑪拉基書 3:1-4", "詩篇 84 或 詩篇 24:7-10", "希伯來書 2:14-18", "路加福音 2:22-40"],
+        ("Lent", "Annunciation"): ["以賽亞書 7:10-14", "詩篇 45 或 詩篇 40:5-10", "希伯來書 10:4-10", "路加福音 1:26-38"],
+        ("Easter", "Visitation"): ["撒母耳記上 2:1-10", "詩篇 113", "羅馬書 12:9-16b", "路加福音 1:39-57"],
+        ("Easter", "Easter Evening"): ["以賽亞書 25:6-9", "詩篇 114", "哥林多前書 5:6b-8", "路加福音 24:13-49"],
+        ("Ordinary Time", "Holy Cross"): ["民數記 21:4b-9", "詩篇 98:1-5 或 詩篇 78:1-2, 34-38", "哥林多前書 1:18-24", "約翰福音 3:13-17"],
         # === 將臨期 Advent ===
         ("Advent", "First Sunday"): ["以賽亞書 64:1-9", "詩篇 80:1-7, 17-19", "哥林多前書 1:3-9", "馬可福音 13:24-37"],
         ("Advent", "Second Sunday"): ["以賽亞書 40:1-11", "詩篇 85:1-2, 8-13", "彼得後書 3:8-15a", "馬可福音 1:1-8"],
@@ -784,6 +796,12 @@ scripture_patch = {
         ("Ordinary Time", "Thanksgiving"): ["申命記 26:1-11", "詩篇 100", "腓立比書 4:4-9", "約翰福音 6:25-35"],
         ("Ordinary Time", "All Saints"): ["但以理書 7:1-3, 15-18", "詩篇 149", "以弗所書 1:11-23", "路加福音 6:20-31"],
         ("Ordinary Time", "Reformation"): ["耶利米書 31:31-34", "詩篇 46", "羅馬書 3:19-28", "約翰福音 8:31-36"],
+        # === 補充固定特殊節日 (甲乙丙三年共用) ===
+        ("Epiphany", "Presentation"): ["瑪拉基書 3:1-4", "詩篇 84 或 詩篇 24:7-10", "希伯來書 2:14-18", "路加福音 2:22-40"],
+        ("Lent", "Annunciation"): ["以賽亞書 7:10-14", "詩篇 45 或 詩篇 40:5-10", "希伯來書 10:4-10", "路加福音 1:26-38"],
+        ("Easter", "Visitation"): ["撒母耳記上 2:1-10", "詩篇 113", "羅馬書 12:9-16b", "路加福音 1:39-57"],
+        ("Easter", "Easter Evening"): ["以賽亞書 25:6-9", "詩篇 114", "哥林多前書 5:6b-8", "路加福音 24:13-49"],
+        ("Ordinary Time", "Holy Cross"): ["民數記 21:4b-9", "詩篇 98:1-5 或 詩篇 78:1-2, 34-38", "哥林多前書 1:18-24", "約翰福音 3:13-17"],
         # === 將臨期 Advent ===
         ("Advent", "First Sunday"): ["耶利米書 33:14-16", "詩篇 25:1-10", "帖撒羅尼迦前書 3:9-13", "路加福音 21:25-36"],
         ("Advent", "Second Sunday"): ["巴錄書 5:1-9 或 瑪拉基書 3:1-4", "路加福音 1:68-79", "腓立比書 1:3-11", "路加福音 3:1-6"],
@@ -1734,12 +1752,16 @@ for year in range(START_YEAR, END_YEAR + 1):
     trinity = easter + timedelta(days=56)
     christ_the_king = advent1 - timedelta(days=7)
 
-    yearly_events = {}
+    yearly_events = []
+    occupied_dates = set()
 
     def add_event(dt, season, sunday, name):
-        if dt not in yearly_events:
-            yearly_events[dt] = {"date": dt, "season": season, "sunday": sunday, "name": name}
-
+        # 避免重複加入相同的禮拜
+        for ev in yearly_events:
+            if ev["date"] == dt and ev["sunday"] == sunday:
+                return
+        yearly_events.append({"date": dt, "season": season, "sunday": sunday, "name": name})
+        occupied_dates.add(dt) # 記錄這天已有特殊節日，不要再排入普通主日
     # 1. 優先加入特殊固定節日與大節日 (確保不會被一般主日覆蓋)
     add_event(date(year, 12, 24), "Christmas", "Christmas Eve", "平安夜")
     add_event(date(year, 12, 25), "Christmas", "Christmas Day", "聖誕節")
@@ -1748,6 +1770,7 @@ for year in range(START_YEAR, END_YEAR + 1):
     add_event(date(year, 2, 2), "Epiphany", "Presentation", "主奉獻日")
     add_event(date(year, 3, 25), "Lent", "Annunciation", "天使報喜日")
     add_event(date(year, 5, 31), "Easter", "Visitation", "馬利亞探望伊利沙伯")
+    add_event(easter, "Easter", "Easter Evening", "復活節黃昏")
     add_event(date(year, 9, 14), "Ordinary Time", "Holy Cross", "聖十字架日")
     add_event(date(year, 10, 31), "Ordinary Time", "Reformation", "宗教改革日")
     add_event(date(year, 11, 1), "Ordinary Time", "All Saints", "諸聖日")
@@ -1763,6 +1786,7 @@ for year in range(START_YEAR, END_YEAR + 1):
     add_event(easter - timedelta(days=2), "Holy Week", "Good Friday", "受難日")
     add_event(easter - timedelta(days=1), "Holy Week", "Holy Saturday", "聖週六")
     add_event(easter, "Easter", "Easter Sunday", "復活節")
+    add_event(easter, "Easter", "Easter Evening", "復活節黃昏")
     add_event(easter + timedelta(days=39), "Easter", "Ascension", "基督升天日")
     add_event(pentecost, "Pentecost", "Pentecost Sunday", "聖靈降臨主日")
     add_event(trinity, "Ordinary Time", "Trinity Sunday", "三一主日")
@@ -1777,7 +1801,7 @@ for year in range(START_YEAR, END_YEAR + 1):
     zh_ords = ["第一", "第二", "第三", "第四", "第五", "第六", "第七", "第八", "第九", "第十"]
 
     while curr.year == year:
-        if curr not in yearly_events:
+        if curr not in occupied_dates:
             season, sunday, name = "", "", ""
             
             # 將臨期
@@ -1831,9 +1855,9 @@ for year in range(START_YEAR, END_YEAR + 1):
         curr += timedelta(days=7)
 
     # 3. 組合出這年度最終的資料 (直接對接完美字典，不靠文字解析)
-    sorted_dates = sorted(yearly_events.keys())
-    for dt in sorted_dates:
-        ev = yearly_events[dt]
+    yearly_events.sort(key=lambda x: (x["date"], 1 if "Evening" in x["sunday"] else 0))
+    for ev in yearly_events:
+        dt = ev["date"]
         cycle_label = get_cycle_label(dt)
         season = ev["season"]
         sunday = ev["sunday"]
