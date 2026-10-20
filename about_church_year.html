@@ -68,12 +68,13 @@
             font-weight: bold;
             margin-right: 10px;
         }
+        /* 補上藍色標籤的 CSS */
+        .bg-blue { background-color: #2563eb; }
         .bg-purple { background-color: #7e22ce; }
         .bg-white { background-color: #f8fafc; color: #333; border: 1px solid #cbd5e1; }
         .bg-green { background-color: #16a34a; }
         .bg-red { background-color: #dc2626; }
         .bg-black { background-color: #1e293b; }
-		.bg-blue { background-color: #2563eb; }
         .back-link {
             display: inline-block;
             margin-bottom: 20px;
@@ -87,15 +88,16 @@
 <body>
 
 <div class="container">
-    <a href="index.html" class="back-link">← 返回三代經課與詩歌查詢</a>
+    <!-- 頂部返回連結 -->
+    <a href="index.html" class="back-link">← 返回中文三代經課</a>
 
     <h1>走進教會年：與基督同行的靈命旅程</h1>
 
     <p>「教會年」（Church Year 或 Liturgical Year），是歷代教會為了幫助信徒更深刻地認識基督，而精心編排的屬靈節奏。透過每年不斷循環的節期，我們得以在歷史與信仰的交織中，以「螺旋向上」的方式，一年比一年更深地經歷三一上帝的奇妙作為。</p>
 
     <div class="hero-image">
-        <!-- 請將 src 的檔名替換為你實際存檔的圖片檔名 -->
         <img src="church_year_chart.jpg" alt="教會年曆圓餅圖">
+        <!-- 修正了多餘的 ">" -->
         <div class="image-caption">圖片版權所有 © South Asian Lutheran Evangelical Mission, Ltd.</div>
     </div>
 
@@ -150,6 +152,11 @@
         <li><strong>連結大公教會：</strong>當我們守著相同的節期，我們正與跨越地域、文化甚至時空的大公教會連結在一起，展現出信仰群體的合一。</li>
         <li><strong>與眾聖徒一同靈修、禱告：</strong>當我們透過教會年每個節日、主日的三代經課讀經時，我們正與大公教會的眾聖徒一同靈修與禱告。</li>
     </ul>
+
+    <!-- 底部返回連結：加上分隔線與置中對齊 -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+        <a href="index.html" class="back-link" style="margin-bottom: 0;">← 返回中文三代經課</a>
+    </div>
 
 </div>
 
