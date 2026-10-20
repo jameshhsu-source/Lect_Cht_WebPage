@@ -1787,14 +1787,29 @@ for church_year in range(2028, END_YEAR+2):
             if (cycle_label, season, sunday) in perfect_templates:
                 description = perfect_templates[(cycle_label, season, sunday)]
             else:
+                # scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
+                # processed_lines = []
+                # for line in scripture_lines:
+                    # if not line: continue
+                    # if re.search(r'\d', line) and not line.startswith("【"): 
+                        # processed_lines.append(get_scripture_links(line))
+                    # else:
+                        # processed_lines.append(line)
                 scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
                 processed_lines = []
                 for line in scripture_lines:
-                    if not line: continue
+                    if not line: 
+                        processed_lines.append("") # 保留空行
+                        continue
+                        
+                    # 如果是一般經文（包含數字且不是以【開頭）
                     if re.search(r'\d', line) and not line.startswith("【"): 
                         processed_lines.append(get_scripture_links(line))
                     else:
-                        processed_lines.append(line)
+                        # 如果是標題（如 【半連續式】、【呼應式】等）
+                        # 我們直接在這裡幫它加上漂亮的 HTML 樣式，讓網頁顯示時有粗體、顏色與區塊感
+                        styled_header = f'<div style="font-weight: bold; color: #1e40af; margin-top: 14px; margin-bottom: 4px; border-left: 4px solid #3b82f6; padding-left: 6px;">{line}</div>'
+                        processed_lines.append(styled_header)                        
                         
                 desc_body = "\n\n".join(processed_lines)
                 hymn_text = get_hymn_text(e["name"], dt)
@@ -1987,15 +2002,41 @@ for ev in all_final_events:
         yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
         c_hymns.append(f'<a href="{yt_url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{h}</a>')
 
-    clean_scriptures = [
-        s for s in scriptures_raw.split("\n") 
-        if s.strip() and not s.startswith("節期意義：") and not s.startswith("代表顏色：")
-    ]
+    # === 將原本的扁平陣列，升級為結構化物件 ===
+    structured_scriptures = {
+        "general": [],
+        "track_semi_continuous": [],
+        "track_complementary": []
+    }
+    
+    current_track = "general" # 預設放在一般區塊
+    
+    for s in scriptures_raw.split("\n"):
+        s_stripped = s.strip()
+        if not s_stripped:
+            continue
+        if s_stripped.startswith("節期意義：") or s_stripped.startswith("代表顏色："):
+            continue
+            
+        # 移除如果先前有加上的 HTML 標籤，還原為純文字
+        clean_text = re.sub(r'<div[^>]*>', '', s_stripped).replace('</div>', '')
+        
+        # 判斷是否進入雙軌制
+        if "【半連續式】" in clean_text:
+            current_track = "track_semi_continuous"
+            continue # 標題本身不需要存入，由前端決定如何顯示
+        elif "【呼應式】" in clean_text:
+            current_track = "track_complementary"
+            continue
+            
+        # 將乾淨的經文存入對應的軌道
+        structured_scriptures[current_track].append(clean_text)
+
     display_title = translate_summary(raw_name) if "Auto-filled" not in raw_name else "補進來的主日"
 
     event_item = {
         "title": display_title,
-        "scriptures": clean_scriptures,
+        "scriptures": structured_scriptures,  # <--- 這裡改送結構化的資料
         "classical_hymns": c_hymns,
         "modern_hymns": modern_hymns,
         "color": color,
