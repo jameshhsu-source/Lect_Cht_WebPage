@@ -134,10 +134,10 @@ season_map = {
     "Christ King": "基督君王主日",
     "Christ  King": "基督君王主日",
     "Christ the King Sunday": "基督君王主日",
-    "All Saints": "古聖紀念日", 
-    "All Saints Day": "古聖紀念日",
-    "All Saints' Day": "古聖紀念日",
-    "All Saints'": "古聖紀念日",
+    "All Saints": "諸聖日", 
+    "All Saints Day": "諸聖日",
+    "All Saints' Day": "諸聖日",
+    "All Saints'": "諸聖日",
     "Ash Wednesday": "聖灰日",
     "Palm Sunday": "棕枝主日",
     "Maundy Thursday": "主立聖餐日", 
@@ -1265,7 +1265,7 @@ def parse_summary(summary_text):
     if "Palm Sunday" in raw_summary or "Passion" in raw_summary: return "Holy Week", "Palm Sunday", "棕枝主日"
     if "Transfiguration" in raw_summary: return "Epiphany", "Transfiguration", "登山變像主日" 
     if "Trinity" in raw_summary: return "Ordinary Time", "Trinity Sunday", "三一主日"
-    if "All Saints" in raw_summary: return "Ordinary Time", "All Saints", "古聖紀念日" 
+    if "All Saints" in raw_summary: return "Ordinary Time", "All Saints", "諸聖日" 
     if "Christ the King" in raw_summary or ("Last Sunday" in raw_summary and "Church Year" in raw_summary): return "Ordinary Time", "Christ the King", "基督君王主日"
     if "Ash Wednesday" in raw_summary: return "Lent", "Ash Wednesday", "聖灰日"
     if "Maundy" in raw_summary or "Holy Thursday" in raw_summary: return "Holy Week", "Maundy Thursday", "主立聖餐日" 
@@ -1744,7 +1744,7 @@ for year in range(START_YEAR, END_YEAR + 1):
     add_event(date(year, 5, 31), "Easter", "Visitation", "馬利亞探望伊利沙伯")
     add_event(date(year, 9, 14), "Ordinary Time", "Holy Cross", "聖十字架日")
     add_event(date(year, 10, 31), "Ordinary Time", "Reformation", "宗教改革日")
-    add_event(date(year, 11, 1), "Ordinary Time", "All Saints", "古聖紀念日")
+    add_event(date(year, 11, 1), "Ordinary Time", "All Saints", "諸聖日")
     add_event(fourth_thursday_of_november(year), "Ordinary Time", "Thanksgiving", "感恩節")
 
     add_event(ash_wednesday, "Lent", "Ash Wednesday", "聖灰日")
