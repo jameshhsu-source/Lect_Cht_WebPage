@@ -1,10 +1,11 @@
-from icalendar import Calendar, Event
 from collections import defaultdict
 from datetime import date, timedelta
 import datetime
 import re
 import urllib.parse
+import os
 import json
+
 
 summary_map = {
     # Advent
@@ -1674,254 +1675,188 @@ def get_liturgical_color(season, sunday):
     return ""    
 
 # =====================================================================
-# 3. 核心執行與生成區 (Execution Core)
+# 3. 核心執行與生成區 (Execution Core) - 純公式引擎
 # =====================================================================
+print("🔄 正在啟動純數學曆法引擎，生成 100 年經課表...")
+
 START_YEAR = 2025
 YEARS = 101
 END_YEAR = START_YEAR + YEARS - 1
 
-perfect_templates = {}
-all_final_events = [] 
+all_final_events = []
 
-print("🔄 正在讀取 ICS 與建立經文資料庫...")
-with open("weekly.ics", "rb") as f:
-    cal = Calendar.from_ical(f.read())
+def get_cycle_label(date_obj):
+    # 嚴格遵守教會年邏輯：甲乙丙年的切換點在「將臨期第一主日」
+    advent_start = calculate_advent1(date_obj.year)
+    liturgical_year = date_obj.year - 1 if date_obj < advent_start else date_obj.year
+    cycle_index = (liturgical_year - 2025) % 3
+    return ["A", "B", "C"][cycle_index]
 
-# --- (A) 解析原有三年份 ICS ---
-for component in cal.walk():
-    if component.name == "VEVENT":
-        start_date = component.get("dtstart").dt
-        check_date = start_date.date() if hasattr(start_date, "date") else start_date
+def get_hymn_by_keys(season, sunday):
+    hymns = hymn_map.get((season, sunday))
+    if not hymns:
+        hymns = hymn_map.get((season, None))
+    if not hymns:
+        return ""
+    linked_hymns = []
+    for h in hymns:
+        search_kw = h.replace("：", " ")
+        yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
+        linked_hymns.append(f'<a href="{yt_url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{h}</a>')
+    return "\n".join(linked_hymns)
 
-        if not (START_YEAR <= start_date.year <= END_YEAR): continue
+for year in range(START_YEAR, END_YEAR + 1):
+    easter = calculate_easter(year)
+    advent1 = calculate_advent1(year)
+    epiphany = date(year, 1, 6)
+    ash_wednesday = easter - timedelta(days=46)
+    pentecost = easter + timedelta(days=49)
+    trinity = easter + timedelta(days=56)
+    christ_the_king = advent1 - timedelta(days=7)
 
-        summary_text = str(component.get("summary"))
-        is_sunday = (check_date.weekday() == 6)
-        summary_lower = summary_text.lower()
+    yearly_events = {}
 
-        if not is_sunday and "sunday" in summary_lower: continue
+    def add_event(dt, season, sunday, name):
+        if dt not in yearly_events:
+            yearly_events[dt] = {"date": dt, "season": season, "sunday": sunday, "name": name}
 
-        valid_weekdays = [
-            "nativity", "holy name", "new year", "epiphany", "presentation", 
-            "annunciation", "ash wednesday", "holy week", "maundy", "good friday", 
-            "holy saturday", "easter vigil", "ascension", "visitation", 
-            "holy cross", "all saints", "thanksgiving"
-        ]
-        is_valid_weekday = any(kw in summary_lower for kw in valid_weekdays)
-        if not is_sunday and not is_valid_weekday: continue
+    # 1. 優先加入特殊固定節日與大節日 (確保不會被一般主日覆蓋)
+    add_event(date(year, 12, 24), "Christmas", "Christmas Eve", "平安夜")
+    add_event(date(year, 12, 25), "Christmas", "Christmas Day", "聖誕節")
+    add_event(date(year, 1, 1), "Christmas", "New Year", "新年")
+    add_event(epiphany, "Epiphany", "Epiphany", "主顯日")
+    add_event(date(year, 2, 2), "Epiphany", "Presentation", "主奉獻日")
+    add_event(date(year, 3, 25), "Lent", "Annunciation", "天使報喜日")
+    add_event(date(year, 5, 31), "Easter", "Visitation", "馬利亞探望伊利沙伯")
+    add_event(date(year, 9, 14), "Ordinary Time", "Holy Cross", "聖十字架日")
+    add_event(date(year, 10, 31), "Ordinary Time", "Reformation", "宗教改革日")
+    add_event(date(year, 11, 1), "Ordinary Time", "All Saints", "古聖紀念日")
+    add_event(fourth_thursday_of_november(year), "Ordinary Time", "Thanksgiving", "感恩節")
 
-        summary_text = re.sub(r'\s*\(Year\s+[ABC]\)', '', summary_text, flags=re.IGNORECASE)
-        if "Nativity of the Lord" in summary_text: continue
+    add_event(ash_wednesday, "Lent", "Ash Wednesday", "聖灰日")
+    add_event(easter - timedelta(days=7), "Holy Week", "Palm Sunday", "棕枝主日")
+    add_event(easter - timedelta(days=6), "Holy Week", "Monday of Holy Week", "聖週一")
+    add_event(easter - timedelta(days=5), "Holy Week", "Tuesday of Holy Week", "聖週二")
+    add_event(easter - timedelta(days=4), "Holy Week", "Wednesday of Holy Week", "聖週三")
+    add_event(easter - timedelta(days=3), "Holy Week", "Maundy Thursday", "主立聖餐日")
+    add_event(easter - timedelta(days=2), "Holy Week", "Good Friday", "受難日")
+    add_event(easter - timedelta(days=1), "Holy Week", "Holy Saturday", "聖週六")
+    add_event(easter, "Easter", "Easter Sunday", "復活節")
+    add_event(easter + timedelta(days=39), "Easter", "Ascension", "基督升天日")
+    add_event(pentecost, "Pentecost", "Pentecost Sunday", "聖靈降臨主日")
+    add_event(trinity, "Ordinary Time", "Trinity Sunday", "三一主日")
+    add_event(christ_the_king, "Ordinary Time", "Christ the King", "基督君王主日")
 
-        cycle_label = get_cycle_label(start_date)
-        season, sunday, display_summary = parse_summary(summary_text)
+    # 2. 掃描該年度的每一個「主日」
+    curr = date(year, 1, 1)
+    while curr.weekday() != 6:
+        curr += timedelta(days=1)
 
-        description = str(component.get("description", "")).replace("–", "-").replace("–", "-").replace("—", "-")
+    ords = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"]
+    zh_ords = ["第一", "第二", "第三", "第四", "第五", "第六", "第七", "第八", "第九", "第十"]
+
+    while curr.year == year:
+        if curr not in yearly_events:
+            season, sunday, name = "", "", ""
+            
+            # 將臨期
+            if advent1 <= curr <= advent1 + timedelta(days=21):
+                idx = (curr - advent1).days // 7
+                season, sunday, name = "Advent", f"{ords[idx]} Sunday", f"將臨期{zh_ords[idx]}主日"
+
+            # 聖誕期 (1/1 前是去年的聖誕節算起，12/25 後是今年的)
+            elif date(year, 1, 1) <= curr < epiphany:
+                prev_christmas = date(year-1, 12, 25)
+                idx = (curr - prev_christmas).days // 7
+                season, sunday, name = "Christmas", f"{ords[idx]} Sunday", f"聖誕期第{zh_ords[idx]}主日"
+            elif date(year, 12, 25) < curr <= date(year, 12, 31):
+                curr_christmas = date(year, 12, 25)
+                idx = (curr - curr_christmas).days // 7
+                season, sunday, name = "Christmas", f"{ords[idx]} Sunday", f"聖誕期第{zh_ords[idx]}主日"
+
+            # 顯現期
+            elif epiphany <= curr < ash_wednesday:
+                if curr + timedelta(days=7) >= ash_wednesday:
+                    season, sunday, name = "Epiphany", "Transfiguration", "登山變像主日"
+                else:
+                    base_sun = epiphany + timedelta(days = (6 - epiphany.weekday()) if epiphany.weekday() != 6 else 7)
+                    idx = (curr - base_sun).days // 7
+                    season, sunday, name = "Epiphany", f"{ords[idx]} Sunday", f"顯現後第{zh_ords[idx]}主日"
+                    if idx == 0:
+                        sunday, name = "First Sunday", "耶穌受洗主日"
+
+            # 預苦期
+            elif ash_wednesday < curr < easter - timedelta(days=7):
+                base_sun = ash_wednesday + timedelta(days = (6 - ash_wednesday.weekday()))
+                idx = (curr - base_sun).days // 7
+                season, sunday, name = "Lent", f"{ords[idx]} Sunday", f"預苦期第{zh_ords[idx]}主日"
+
+            # 復活期
+            elif easter < curr < pentecost:
+                idx = (curr - easter).days // 7
+                season, sunday, name = "Easter", f"{ords[idx]} Sunday", f"復活期第{zh_ords[idx]}主日"
+
+            # 常年期 (往回推算 Proper 組數)
+            elif trinity < curr < christ_the_king:
+                weeks_before_advent = (advent1 - curr).days // 7
+                proper_num = 30 - weeks_before_advent
+                if proper_num > 0:
+                    zh_num = arabic_to_zh.get(str(proper_num), str(proper_num))
+                    season, sunday, name = "Ordinary Time", f"Proper {proper_num}", f"常年期第{zh_num}組經課"
+
+            if season:
+                add_event(curr, season, sunday, name)
+
+        curr += timedelta(days=7)
+
+    # 3. 組合出這年度最終的資料 (直接對接完美字典，不靠文字解析)
+    sorted_dates = sorted(yearly_events.keys())
+    for dt in sorted_dates:
+        ev = yearly_events[dt]
+        cycle_label = get_cycle_label(dt)
+        season = ev["season"]
+        sunday = ev["sunday"]
+        name = ev["name"]
+
+        # 直接向「終極完整版 scripture_patch」調閱資料！
+        scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
+        if not scripture_lines:
+            continue # 如果當天沒有經課資料，直接跳過
+
+        processed_lines = []
+        for line in scripture_lines:
+            if not line:
+                processed_lines.append("")
+                continue
+
+            if re.search(r'\d', line) and not line.startswith("【"):
+                processed_lines.append(get_scripture_links(line))
+            else:
+                processed_lines.append(line)
+
+        desc_body = "\n\n".join(processed_lines)
+        hymn_text = get_hymn_by_keys(season, sunday)
         
-        new_lines = []
-        for line in description.splitlines():
-            line = line.strip()
-            if not line: continue
-            line = re.sub(r'[–—−\x96\x97\u2013\u2014]', '-', line)
-            if "http" in line: continue
-            if line.startswith("(") and line.endswith(")"): continue
-
-            has_book = False
-            for eng_book in book_map.keys():
-                if re.search(rf'\b{re.escape(eng_book)}\b', line, flags=re.IGNORECASE) and re.search(r'\d', line):
-                    has_book = True
-                    break
-                    
-            if has_book:
-                line = re.sub(r'\s+and\s+', ' 與 ', line, flags=re.IGNORECASE)
-                line = re.sub(r'\s+or\s+', ' 或 ', line, flags=re.IGNORECASE)
-                clean_trans = translate_text(line, cycle_label, season, sunday)
-                clean_trans = re.sub(r"^(第一部分讀經|第二部分讀經|福音經課|補充經課|經課與詩篇)[\s:]*", "", clean_trans).strip()
-                new_lines.append(get_scripture_links(clean_trans))
-
-        description = "\n".join(new_lines)
-        if sunday == "Thanksgiving":
-            egg_text = "🦃 太18:18 我實在告訴你們，凡你們在地上所捆綁的，在天上也要捆綁；凡你們在地上所釋放的，在天上也要釋放。 🦃"
-            if egg_text not in description: 
-                description = (description + "\n\n" + egg_text).strip()
-
-        hymn_text = get_hymn_text(summary_text, start_date)
-        if hymn_text: description += "\n\n今日詩歌：\n" + hymn_text
-
+        description = desc_body + ("\n\n今日詩歌：\n" + hymn_text if hymn_text else "")
+        
         color_str = get_liturgical_color(season, sunday)
         if color_str: description += f"\n\n代表顏色：{color_str}"
-
         meaning_str = season_meaning_map.get(season, "")
         if meaning_str: description += f"\n節期意義：{meaning_str}"
-
-        perfect_templates[(cycle_label, season, sunday)] = description 
-        all_final_events.append({"date": check_date, "name": summary_text, "source": "original", "description": description})        
-
-print("✨ 正在補全 100 年份所有經課事件...")
-# --- (B) 依照公式生成 100 年份 ---
-canonical_set_with_formula = build_canonical_set_with_formula(cal)
-
-for church_year in range(2028, END_YEAR+2):
-    advent1 = calculate_advent1(church_year)
-    next_advent1 = calculate_advent1(church_year+1)
-    cycle_label = determine_cycle(advent1)
-    
-    daily_buffer = defaultdict(list)
-
-    for e in canonical_set_with_formula:
-        if e["cycle"] != cycle_label: continue
-            
-        dt = eval_formula(e["formula"], church_year)
-        if dt and advent1 <= dt < next_advent1:
-            if "Proper" in e["name"]:
-                pentecost = calculate_easter(church_year+1) + timedelta(days=49)
-                if dt <= pentecost: continue 
-
-            if "Epiphany" in e["name"] and "after" in e["name"]:
-                ash_wednesday = calculate_easter(church_year+1) - timedelta(days=46)
-                if dt >= ash_wednesday: continue 
-
-            dt_str = dt.strftime('%Y%m%d')
-            season, sunday, display_summary = parse_summary(e["name"])
-            
-            if (cycle_label, season, sunday) in perfect_templates:
-                description = perfect_templates[(cycle_label, season, sunday)]
-            else:
-                # scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
-                # processed_lines = []
-                # for line in scripture_lines:
-                    # if not line: continue
-                    # if re.search(r'\d', line) and not line.startswith("【"): 
-                        # processed_lines.append(get_scripture_links(line))
-                    # else:
-                        # processed_lines.append(line)
-                scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
-                processed_lines = []
-                for line in scripture_lines:
-                    if not line: 
-                        processed_lines.append("") # 保留空行
-                        continue
-                        
-                    # 如果是一般經文（包含數字且不是以【開頭）
-                    if re.search(r'\d', line) and not line.startswith("【"): 
-                        processed_lines.append(get_scripture_links(line))
-                    else:
-                        # 如果是標題（如 【半連續式】、【呼應式】等）
-                        # 我們直接在這裡幫它加上漂亮的 HTML 樣式，讓網頁顯示時有粗體、顏色與區塊感
-                        styled_header = f'<div style="font-weight: bold; color: #1e40af; margin-top: 14px; margin-bottom: 4px; border-left: 4px solid #3b82f6; padding-left: 6px;">{line}</div>'
-                        processed_lines.append(styled_header)                        
-                        
-                desc_body = "\n\n".join(processed_lines)
-                hymn_text = get_hymn_text(e["name"], dt)
-                description = desc_body + ("\n\n今日詩歌：\n" + hymn_text if hymn_text else "")
-                
-                color_str = get_liturgical_color(season, sunday)
-                if color_str: description += f"\n\n代表顏色：{color_str}"
-                meaning_str = season_meaning_map.get(season, "")
-                if meaning_str: description += f"\n節期意義：{meaning_str}"
-
-            daily_buffer[dt_str].append({
-                "name": e["name"],
-                "dt": dt,
-                "final_desc": description
-            })
-
-    final_event_lookup = {} 
-    generated_dates = set()
-    for dt_str in sorted(daily_buffer.keys()):
-        candidates = daily_buffer[dt_str]
-        for selected in candidates:
-            all_final_events.append({"date": selected["dt"], "name": selected["name"], "source": "generated", "description": selected["final_desc"]})
         
-        generated_dates.add(dt_str)
-        special_candidates = [c for c in candidates if not is_generic_sunday(c["name"])]
-        best_candidate = special_candidates[0] if special_candidates else candidates[0]
-        final_event_lookup[dt_str] = best_candidate["final_desc"]
+        if sunday == "Thanksgiving":
+             description += "\n\n🦃 太18:18 我實在告訴你們，凡你們在地上所捆綁的，在天上也要捆綁；凡你們在地上所釋放的，在天上也要釋放。 🦃"
 
-    # 補漏主日
-    curr_sun = advent1
-    while curr_sun < next_advent1:
-        if curr_sun.month == 12 and curr_sun.day == 25:
-            curr_sun += timedelta(days=7)
-            continue
-            
-        s_str = curr_sun.strftime('%Y%m%d')
-        if s_str not in generated_dates: 
-             prev_sun = curr_sun - timedelta(days=7)
-             prev_s_str = prev_sun.strftime('%Y%m%d')
-             
-             if prev_s_str in final_event_lookup:
-                 new_desc = final_event_lookup[prev_s_str]
-                 all_final_events.append({"date": curr_sun, "name": "Auto-filled (Fixed)", "source": "generated", "description": new_desc})
-                 final_event_lookup[s_str] = new_desc
-                 generated_dates.add(s_str)
-             
-        curr_sun += timedelta(days=7)     
+        all_final_events.append({
+            "date": dt,
+            "name": name,
+            "season": season,   # 直接保存，供下一步 JSON 輸出使用
+            "sunday": sunday,   # 直接保存，供下一步 JSON 輸出使用
+            "source": "generated",
+            "description": description
+        })
 
-# --- (C) 生成 100 年專屬平安夜與聖誕節 ---
-for yr in range(START_YEAR, END_YEAR + 2):
-    # === 1. 生成 12/24 平安夜 ===
-    dt_eve = datetime.date(yr, 12, 24)
-    cycle_label_eve = determine_cycle(dt_eve) 
-    season_eve, sunday_eve = "Christmas", "Christmas Eve"
-    
-    # 經文與聖誕節一模一樣，所以強制去抓 (Christmas Day) 的經文
-    scripture_lines_eve = scripture_patch.get(cycle_label_eve, {}).get(("Christmas", "Christmas Day"), [])
-    processed_lines_eve = []
-    for line in scripture_lines_eve:
-        if not line: continue
-        if re.search(r'\d', line) and not line.startswith("【"):
-            processed_lines_eve.append(get_scripture_links(line))
-        else:
-            processed_lines_eve.append(line)
-            
-    desc_body_eve = "\n\n".join(processed_lines_eve)
-    # 詩歌會自動抓到 hymn_map 裡面的 Christmas Eve
-    hymn_text_eve = get_hymn_text(sunday_eve, dt_eve)
-    description_eve = desc_body_eve + ("\n\n今日詩歌：\n" + hymn_text_eve if hymn_text_eve else "")
-    
-    color_str_eve = get_liturgical_color(season_eve, sunday_eve)
-    if color_str_eve: description_eve += f"\n\n代表顏色：{color_str_eve}"
-    meaning_str_eve = season_meaning_map.get(season_eve, "")
-    if meaning_str_eve: description_eve += f"\n節期意義：{meaning_str_eve}"
-        
-    all_final_events.append({
-        "date": dt_eve, 
-        "name": "Christmas Eve", 
-        "source": "generated", 
-        "description": description_eve
-    })
-
-    # === 2. 生成 12/25 聖誕節 ===
-    dt_day = datetime.date(yr, 12, 25)
-    cycle_label_day = determine_cycle(dt_day) 
-    season_day, sunday_day = "Christmas", "Christmas Day"
-    
-    scripture_lines_day = scripture_patch.get(cycle_label_day, {}).get((season_day, sunday_day), [])
-    processed_lines_day = []
-    for line in scripture_lines_day:
-        if not line: continue
-        if re.search(r'\d', line) and not line.startswith("【"):
-            processed_lines_day.append(get_scripture_links(line))
-        else:
-            processed_lines_day.append(line)
-            
-    desc_body_day = "\n\n".join(processed_lines_day)
-    hymn_text_day = get_hymn_text(sunday_day, dt_day)
-    description_day = desc_body_day + ("\n\n今日詩歌：\n" + hymn_text_day if hymn_text_day else "")
-    
-    color_str_day = get_liturgical_color(season_day, sunday_day)
-    if color_str_day: description_day += f"\n\n代表顏色：{color_str_day}"
-    meaning_str_day = season_meaning_map.get(season_day, "")
-    if meaning_str_day: description_day += f"\n節期意義：{meaning_str_day}"
-        
-    all_final_events.append({
-        "date": dt_day, 
-        "name": "Christmas Day", 
-        "source": "generated", 
-        "description": description_day
-    })
-
+print(f"成功產出 100 年份")
 # =====================================================================
 # 4. JSON 網頁資料輸出區 (Web JSON Generation)
 # =====================================================================
@@ -1931,30 +1866,16 @@ web_data = defaultdict(list)
 
 for ev in all_final_events:
     date_obj = ev["date"]
-    if hasattr(date_obj, "date"): date_obj = date_obj.date()
-        
     date_str = date_obj.strftime("%Y-%m-%d")
+    
     raw_name = ev["name"]
+    season = ev["season"]
+    sunday = ev["sunday"]
     desc = ev.get("description", "")
     
-    current_year = determine_cycle(date_obj)
-    season, sunday, _ = parse_summary(raw_name)
-    
-    if sunday and "Proper" in sunday: season = "Ordinary Time"
-    if season == "Easter" and any(k in raw_name for k in ["Resurrection", "Easter Day", "Easter Dawn", "Easter Evening", "Easter Vigil"]): sunday = "Easter Sunday"
-    if season == "Christmas" and "Nativity" in raw_name: sunday = "Christmas Eve" if "Eve" in raw_name else "Christmas Day"
-    if season == "Epiphany" and "Epiphany of" in raw_name: sunday = "Epiphany"
-    if season == "Pentecost" and "Day of Pentecost" in raw_name: sunday = "Pentecost Sunday"
-        
-    s_lower = raw_name.lower()
-    if "holy name" in s_lower or "new year" in s_lower: season, sunday = "Christmas", "Christmas Day"
-    if "presentation" in s_lower: season, sunday = "Epiphany", "Last Sunday"
-    if "annunciation" in s_lower: season, sunday = "Lent", "First Sunday"
-    if "passion" in s_lower or "monday of holy week" in s_lower or "tuesday of" in s_lower or "wednesday of" in s_lower: season, sunday = "Holy Week", "Good Friday"
-    if "visitation" in s_lower: season, sunday = "Easter", "Seventh Sunday"
-    if "holy cross" in s_lower: season, sunday = "Ordinary Time", "Holy Cross"
-    if "thanksgiving" in s_lower: season, sunday = "Ordinary Time", "Thanksgiving"
+    cycle_label = get_cycle_label(date_obj)
 
+    # 1. 拆解已經組合好的 description，還原成獨立欄位
     parts = desc.split("今日詩歌：")
     scriptures_raw = parts[0].strip()
     
@@ -1968,31 +1889,34 @@ for ev in all_final_events:
             c_split = bottom_part.split("代表顏色：")
             color = c_split[1].split("\n")[0].strip()
             bottom_part = c_split[0]
-            
+        
         for line in bottom_part.split("\n"):
             line = line.strip()
-            if line and "節期意義：" not in line and "代表顏色：" not in line:
+            # 濾掉非詩歌的雜訊
+            if line and "節期意義：" not in line and "代表顏色：" not in line and "🦃" not in line:
                 modern_hymns.append(line)
                 
     if "節期意義：" in desc:
         m_split = desc.split("節期意義：")
         meaning = m_split[1].split("\n")[0].strip()
 
+    # 2. 獲取古典詩歌 (利用直接傳遞過來的 season 與 sunday)
     raw_c_hymns = []
     year_dict = classical_hymns_map.get((season, sunday))
     
     if not year_dict:
+        # 模糊搜尋 (Fallback)
         sorted_items = sorted(classical_hymns_map.items(), key=lambda x: len(x[0][1] or ""), reverse=True)
         for (map_season, map_sunday), map_dict in sorted_items:
             if map_season == season and map_sunday:
-                if map_sunday.lower() == (season or "").lower(): continue
-                if map_sunday.lower() in (sunday or "").lower() or map_sunday.lower() in raw_name.lower():
+                if map_sunday.lower() == season.lower(): continue
+                if map_sunday.lower() in sunday.lower() or map_sunday.lower() in raw_name.lower():
                     year_dict = map_dict
                     break
 
     if year_dict:
-        if current_year in year_dict:
-            raw_c_hymns = year_dict[current_year]
+        if cycle_label in year_dict:
+            raw_c_hymns = year_dict[cycle_label]
         elif "All" in year_dict:
             raw_c_hymns = year_dict["All"]
             
@@ -2002,41 +1926,37 @@ for ev in all_final_events:
         yt_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_kw)}"
         c_hymns.append(f'<a href="{yt_url}" target="_blank" style="color: inherit; text-decoration: none;" onmouseover="this.style.color=\'#2563eb\'" onmouseout="this.style.color=\'inherit\'">{h}</a>')
 
-    # === 將原本的扁平陣列，升級為結構化物件 ===
+    # 3. 結構化雙軌經文 (最核心的死角清理！)
     structured_scriptures = {
         "general": [],
         "track_semi_continuous": [],
         "track_complementary": []
     }
     
-    current_track = "general" # 預設放在一般區塊
+    current_track = "general"
     
     for s in scriptures_raw.split("\n"):
         s_stripped = s.strip()
         if not s_stripped:
             continue
-        if s_stripped.startswith("節期意義：") or s_stripped.startswith("代表顏色："):
+        if s_stripped.startswith("節期意義：") or s_stripped.startswith("代表顏色：") or s_stripped.startswith("🦃"):
             continue
             
-        # 移除如果先前有加上的 HTML 標籤，還原為純文字
         clean_text = re.sub(r'<div[^>]*>', '', s_stripped).replace('</div>', '')
         
-        # 判斷是否進入雙軌制
         if "【半連續式】" in clean_text:
             current_track = "track_semi_continuous"
-            continue # 標題本身不需要存入，由前端決定如何顯示
+            continue
         elif "【呼應式】" in clean_text:
             current_track = "track_complementary"
             continue
             
-        # 將乾淨的經文存入對應的軌道
         structured_scriptures[current_track].append(clean_text)
 
-    display_title = translate_summary(raw_name) if "Auto-filled" not in raw_name else "補進來的主日"
-
+    # 4. 組裝該日的 JSON 物件
     event_item = {
-        "title": display_title,
-        "scriptures": structured_scriptures,  # <--- 這裡改送結構化的資料
+        "title": raw_name,
+        "scriptures": structured_scriptures,
         "classical_hymns": c_hymns,
         "modern_hymns": modern_hymns,
         "color": color,
@@ -2046,24 +1966,21 @@ for ev in all_final_events:
     
     web_data[date_str].append(event_item)
 
-import os
 
-# 建立一個資料夾來放這些分區檔案 (避免檔案太亂)
+# 5. 輸出年度 JSON 檔案 (壓縮體積)
 output_dir = "rcl_data_yearly"
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-# 1. 將資料按「年份」進行分組 (Data Partitioning)
 yearly_web_data = defaultdict(dict)
 for date_str, events in web_data.items():
-    year = date_str[:4] # 擷取 '2026-10-10' 的前四碼年份
+    year = date_str[:4] # 擷取年份
     yearly_web_data[year][date_str] = events
 
-# 2. 輸出成分年份的小檔案，並移除 indent 來壓縮體積 (Minify)
 for year, data_for_year in yearly_web_data.items():
     file_path = os.path.join(output_dir, f"rcl_data_{year}.json")
     with open(file_path, "w", encoding="utf-8") as f:
-         # 拿掉 indent=2，讓 JSON 變成單行，大幅減少檔案體積與解析時間
+        # 拿掉 indent 讓 JSON 變成單行，大幅減少檔案體積與解析時間
         json.dump(data_for_year, f, ensure_ascii=False)
 
-print("rcl data yealy 已成功產出！")
+print("rcl_data_yearly JSON 已成功產出！")
