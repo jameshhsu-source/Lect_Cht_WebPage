@@ -412,6 +412,10 @@ all_final_events = []
 # === 終極完整版：涵蓋甲、乙、丙三年所有節期與常年期雙軌經文 ===
 scripture_patch = {
     "A": {
+        # === 特殊節日 Special Days ===
+        ("Ordinary Time", "Thanksgiving"): ["申命記 8:7-18", "詩篇 65", "哥林多後書 9:6-15", "路加福音 17:11-19"],
+        ("Ordinary Time", "All Saints"): ["啟示錄 7:9-17", "詩篇 34:1-10, 22", "約翰一書 3:1-3", "馬太福音 5:1-12"],
+        ("Ordinary Time", "Reformation"): ["耶利米書 31:31-34", "詩篇 46", "羅馬書 3:19-28", "約翰福音 8:31-36"],
         # === 將臨期 Advent ===
         ("Advent", "First Sunday"): ["以賽亞書 2:1-5", "詩篇 122", "羅馬書 13:11-14", "馬太福音 24:36-44"],
         ("Advent", "Second Sunday"): ["以賽亞書 11:1-10", "詩篇 72:1-7, 18-19", "羅馬書 15:4-13", "馬太福音 3:1-12"],
@@ -592,6 +596,10 @@ scripture_patch = {
     },
     
     "B": {
+        # === 特殊節日 Special Days ===
+        ("Ordinary Time", "Thanksgiving"): ["約珥書 2:21-27", "詩篇 126", "提摩太前書 2:1-7", "馬太福音 6:25-33"],
+        ("Ordinary Time", "All Saints"): ["所羅門智訓 3:1-9 或 以賽亞書 25:6-9", "詩篇 24", "啟示錄 21:1-6a", "約翰福音 11:32-44"],
+        ("Ordinary Time", "Reformation"): ["耶利米書 31:31-34", "詩篇 46", "羅馬書 3:19-28", "約翰福音 8:31-36"],
         # === 將臨期 Advent ===
         ("Advent", "First Sunday"): ["以賽亞書 64:1-9", "詩篇 80:1-7, 17-19", "哥林多前書 1:3-9", "馬可福音 13:24-37"],
         ("Advent", "Second Sunday"): ["以賽亞書 40:1-11", "詩篇 85:1-2, 8-13", "彼得後書 3:8-15a", "馬可福音 1:1-8"],
@@ -772,6 +780,10 @@ scripture_patch = {
     },
 
     "C": {
+        # === 特殊節日 Special Days ===
+        ("Ordinary Time", "Thanksgiving"): ["申命記 26:1-11", "詩篇 100", "腓立比書 4:4-9", "約翰福音 6:25-35"],
+        ("Ordinary Time", "All Saints"): ["但以理書 7:1-3, 15-18", "詩篇 149", "以弗所書 1:11-23", "路加福音 6:20-31"],
+        ("Ordinary Time", "Reformation"): ["耶利米書 31:31-34", "詩篇 46", "羅馬書 3:19-28", "約翰福音 8:31-36"],
         # === 將臨期 Advent ===
         ("Advent", "First Sunday"): ["耶利米書 33:14-16", "詩篇 25:1-10", "帖撒羅尼迦前書 3:9-13", "路加福音 21:25-36"],
         ("Advent", "Second Sunday"): ["巴錄書 5:1-9 或 瑪拉基書 3:1-4", "路加福音 1:68-79", "腓立比書 1:3-11", "路加福音 3:1-6"],
@@ -1811,7 +1823,7 @@ for year in range(START_YEAR, END_YEAR + 1):
 
         curr += timedelta(days=7)
 
-    # 3. 組合出這年度最終的資料 (直接對接完美字典，不靠文字解析)
+    # 3. 組合出這年度最終的資料
     sorted_dates = sorted(yearly_events.keys())
     for dt in sorted_dates:
         ev = yearly_events[dt]
@@ -1822,8 +1834,11 @@ for year in range(START_YEAR, END_YEAR + 1):
 
         # 直接向「終極完整版 scripture_patch」調閱資料！
         scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
-        if not scripture_lines:
-            continue # 如果當天沒有經課資料，直接跳過
+        
+        # 🚨 修正：如果是感恩節等特殊節日，即使字典裡沒有標準經文，我們也不要跳過它！
+        is_special_holiday = sunday in ["Thanksgiving", "Holy Cross", "Reformation", "All Saints"]
+        if not scripture_lines and not is_special_holiday:
+            continue # 只有一般的空主日才跳過
 
         processed_lines = []
         for line in scripture_lines:
@@ -1835,6 +1850,10 @@ for year in range(START_YEAR, END_YEAR + 1):
                 processed_lines.append(get_scripture_links(line))
             else:
                 processed_lines.append(line)
+                
+        # 🦃 既然字典沒經文，我們幫感恩節塞一個預設的經文區塊
+        if sunday == "Thanksgiving" and not processed_lines:
+            processed_lines.append("【感恩節特別禮拜】\n可自由選讀感恩節相關經文（如：申命記 8:7-18 或 腓立比書 4:4-9）")
 
         desc_body = "\n\n".join(processed_lines)
         hymn_text = get_hymn_by_keys(season, sunday)
@@ -1846,14 +1865,15 @@ for year in range(START_YEAR, END_YEAR + 1):
         meaning_str = season_meaning_map.get(season, "")
         if meaning_str: description += f"\n節期意義：{meaning_str}"
         
+        # 保留你的彩蛋
         if sunday == "Thanksgiving":
              description += "\n\n🦃 太18:18 我實在告訴你們，凡你們在地上所捆綁的，在天上也要捆綁；凡你們在地上所釋放的，在天上也要釋放。 🦃"
 
         all_final_events.append({
             "date": dt,
             "name": name,
-            "season": season,   # 直接保存，供下一步 JSON 輸出使用
-            "sunday": sunday,   # 直接保存，供下一步 JSON 輸出使用
+            "season": season,
+            "sunday": sunday,
             "source": "generated",
             "description": description
         })
