@@ -1070,6 +1070,8 @@ classical_hymns_map = {
     ("Ordinary Time", "Proper 28"): {"All": ["The day is surely drawing near"]},
     ("Ordinary Time", "Proper 29"): {"A": ["The Head that once was crowned with thorns"], "B": ["Lo! He comes with clouds descending"], "C": ["Lord, enthroned in heav'nly splendor"]}
 }
+# 將 A, B, C 轉換為中文
+cycle_zh_map = {"A": "甲年", "B": "乙年", "C": "丙年"}
 
 def get_scripture_links(line):
     def replace_match(m):
@@ -1953,9 +1955,11 @@ for ev in all_final_events:
             
         structured_scriptures[current_track].append(clean_text)
 
-    # 4. 組裝該日的 JSON 物件
+    # 4. 組裝該日的 JSON 物件 (標題後方自動加上年份)
+    cycle_zh = cycle_zh_map.get(cycle_label, "")
+
     event_item = {
-        "title": raw_name,
+        "title": f"{raw_name} ({cycle_zh})",
         "scriptures": structured_scriptures,
         "classical_hymns": c_hymns,
         "modern_hymns": modern_hymns,
