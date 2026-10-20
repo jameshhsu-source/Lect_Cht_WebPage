@@ -1493,7 +1493,13 @@ def determine_formula(summary: str, dt: date = None) -> str:
             return f"calculate_advent1(year) + timedelta(weeks={num-1})"
     
     return ""
-
+    
+def second_monday_of_october(year: int) -> date:
+    d = date(year, 10, 1)
+    while d.weekday() != 0: # 0 代表星期一
+        d += timedelta(days=1)
+    return d + timedelta(weeks=1) # 找到第一個星期一後，再加一週就是第二個星期一
+    
 def fourth_thursday_of_november(year: int) -> date:
     d = date(year, 11, 1)
     while d.weekday() != 3:
@@ -1745,6 +1751,7 @@ for year in range(START_YEAR, END_YEAR + 1):
     add_event(date(year, 9, 14), "Ordinary Time", "Holy Cross", "聖十字架日")
     add_event(date(year, 10, 31), "Ordinary Time", "Reformation", "宗教改革日")
     add_event(date(year, 11, 1), "Ordinary Time", "All Saints", "諸聖日")
+    add_event(second_monday_of_october(year), "Ordinary Time", "Canadian Thanksgiving Day", "加拿大感恩節")
     add_event(fourth_thursday_of_november(year), "Ordinary Time", "Thanksgiving", "感恩節")
 
     add_event(ash_wednesday, "Lent", "Ash Wednesday", "聖灰日")
@@ -1823,7 +1830,7 @@ for year in range(START_YEAR, END_YEAR + 1):
 
         curr += timedelta(days=7)
 
-    # 3. 組合出這年度最終的資料
+    # 3. 組合出這年度最終的資料 (直接對接完美字典，不靠文字解析)
     sorted_dates = sorted(yearly_events.keys())
     for dt in sorted_dates:
         ev = yearly_events[dt]
@@ -1832,11 +1839,14 @@ for year in range(START_YEAR, END_YEAR + 1):
         sunday = ev["sunday"]
         name = ev["name"]
 
+        # 💡 處理加拿大與美國感恩節共用經文的情況
+        lookup_sunday = "Thanksgiving" if sunday == "Canadian Thanksgiving Day" else sunday
+
         # 直接向「終極完整版 scripture_patch」調閱資料！
-        scripture_lines = scripture_patch.get(cycle_label, {}).get((season, sunday), [])
+        scripture_lines = scripture_patch.get(cycle_label, {}).get((season, lookup_sunday), [])
         
-        # 🚨 修正：如果是感恩節等特殊節日，即使字典裡沒有標準經文，我們也不要跳過它！
-        is_special_holiday = sunday in ["Thanksgiving", "Holy Cross", "Reformation", "All Saints"]
+        # 🚨 修正：如果是特殊節日，即使字典裡沒有標準經文，我們也不要跳過它！
+        is_special_holiday = lookup_sunday in ["Thanksgiving", "Holy Cross", "Reformation", "All Saints"]
         if not scripture_lines and not is_special_holiday:
             continue # 只有一般的空主日才跳過
 
@@ -1850,23 +1860,19 @@ for year in range(START_YEAR, END_YEAR + 1):
                 processed_lines.append(get_scripture_links(line))
             else:
                 processed_lines.append(line)
-                
-        # 🦃 既然字典沒經文，我們幫感恩節塞一個預設的經文區塊
-        if sunday == "Thanksgiving" and not processed_lines:
-            processed_lines.append("【感恩節特別禮拜】\n可自由選讀感恩節相關經文（如：申命記 8:7-18 或 腓立比書 4:4-9）")
 
         desc_body = "\n\n".join(processed_lines)
-        hymn_text = get_hymn_by_keys(season, sunday)
+        hymn_text = get_hymn_by_keys(season, lookup_sunday)
         
         description = desc_body + ("\n\n今日詩歌：\n" + hymn_text if hymn_text else "")
         
-        color_str = get_liturgical_color(season, sunday)
+        color_str = get_liturgical_color(season, lookup_sunday)
         if color_str: description += f"\n\n代表顏色：{color_str}"
         meaning_str = season_meaning_map.get(season, "")
         if meaning_str: description += f"\n節期意義：{meaning_str}"
         
-        # 保留你的彩蛋
-        if sunday == "Thanksgiving":
+        # 把火雞放出來！加拿大和美國感恩節都會有火雞彩蛋
+        if lookup_sunday == "Thanksgiving":
              description += "\n\n🦃 太18:18 我實在告訴你們，凡你們在地上所捆綁的，在天上也要捆綁；凡你們在地上所釋放的，在天上也要釋放。 🦃"
 
         all_final_events.append({
@@ -1961,9 +1967,8 @@ for ev in all_final_events:
         s_stripped = s.strip()
         if not s_stripped:
             continue
-        if s_stripped.startswith("節期意義：") or s_stripped.startswith("代表顏色：") or s_stripped.startswith("🦃"):
-            continue
-            
+        if s_stripped.startswith("節期意義：") or s_stripped.startswith("代表顏色："):
+            continue            
         clean_text = re.sub(r'<div[^>]*>', '', s_stripped).replace('</div>', '')
         
         if "【半連續式】" in clean_text:
