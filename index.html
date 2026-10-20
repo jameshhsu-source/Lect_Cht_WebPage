@@ -192,9 +192,10 @@ async function findClosestDataAsync(targetDateStr) {
                 html += `<hr style="margin: 30px 0; border: 0; border-top: 2px dashed #cbd5e1;">`;
             }
 
-			html += `<div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px;">`;
 			html += `  <h3 style="margin: 0;">${dataItem.title}</h3>`;
-			html += `  <a href="about_church_year.html" style="color: #333; text-decoration: none; font-size: 0.85em;">(什麼是教會年?)</a>`;
+			html += `</div>`;            
+			html += `<div>`;
+			html += `  <a href="about_church_year.html" style="color: #333; text-decoration: none; font-size: 0.85em;">關於教會年</a>`;
 			html += `</div>`;            
 			html += `<div class="section-title">經課經文</div><div class="data-list">`;
             
