@@ -1871,10 +1871,6 @@ for year in range(START_YEAR, END_YEAR + 1):
         meaning_str = season_meaning_map.get(season, "")
         if meaning_str: description += f"\n節期意義：{meaning_str}"
         
-        # 把火雞放出來！加拿大和美國感恩節都會有火雞彩蛋
-        if lookup_sunday == "Thanksgiving":
-             description += "\n\n🦃 太18:18 我實在告訴你們，凡你們在地上所捆綁的，在天上也要捆綁；凡你們在地上所釋放的，在天上也要釋放。 🦃"
-
         all_final_events.append({
             "date": dt,
             "name": name,
@@ -1979,7 +1975,11 @@ for ev in all_final_events:
             continue
             
         structured_scriptures[current_track].append(clean_text)
-
+    # ==============================================================
+    # 🦃 讓火雞安全歸位！直接塞入 general 經文區塊的最下方
+    # ==============================================================
+    if sunday in ["Thanksgiving", "Canadian Thanksgiving Day"]:
+        structured_scriptures["general"].append("🦃 太18:18 我實在告訴你們，凡你們在地上所捆綁的，在天上也要捆綁；凡你們在地上所釋放的，在天上也要釋放。 🦃")
     # 4. 組裝該日的 JSON 物件 (標題後方自動加上年份)
     cycle_zh = cycle_zh_map.get(cycle_label, "")
 
