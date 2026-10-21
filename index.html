@@ -26,12 +26,12 @@
         .meta { margin-top: 20px; font-size: 0.95rem; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
         a { color: #2563eb; text-decoration: none; word-break: break-all; }
         
-        /* 新增：詩歌卡片的專屬樣式 */
+        /* 詩歌卡片的專屬樣式 */
         .hymn-card {
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             padding: 12px;
-            margin-top: 15px;
+            margin-top: 5px;
         }
         .hymn-card ul {
             list-style: none; /* 去除點點 */
@@ -120,13 +120,11 @@ async function findClosestDataAsync(targetDateStr) {
     }
 
     // 取得當天預期應該落在哪個節期（透過年份或前後資料推導，或者我們從資料庫裡找最近的節期判定）
-    // 這裡我們用一個聰明的方法：先找出最近的一筆有效資料作為「當前節期」的參考
     let currentSeason = null;
     let tempDate = new Date(targetDate);
     for (let i = 0; i < 7; i++) {
         let dStr = getLocalDateString(tempDate);
         if (lectionaryData[dStr] && lectionaryData[dStr].length > 0) {
-            // 取該日資料的第一筆來作為判定節期的參考
             currentSeason = lectionaryData[dStr][0].season; 
             break;
         }
@@ -150,7 +148,6 @@ async function findClosestDataAsync(targetDateStr) {
             let candidate = lectionaryData[sStr][0];
             
             // 【關鍵防呆檢核】：檢查找到的主日是否跟當前查詢日屬於同一個節期？
-            // 如果 currentSeason 有抓到，且與候選資料的 season 不同，代表「跨節期了」！
             if (currentSeason && candidate.season && currentSeason !== candidate.season) {
                 // 跨節期！停止往回抓主日，改為抓「同節期內最近的節日」
                 break; 
@@ -176,7 +173,6 @@ async function findClosestDataAsync(targetDateStr) {
 
             if (lectionaryData[fStr] && lectionaryData[fStr].length > 0) {
                 let candidate = lectionaryData[fStr][0];
-                // 確保也沒有超出節期
                 if (!currentSeason || candidate.season === currentSeason) {
                     renderData(fStr, lectionaryData[fStr], true, targetDateStr);
                     found = true;
@@ -244,9 +240,10 @@ async function findClosestDataAsync(targetDateStr) {
                 html += `</div>`;
             }
             
-            html += `</div>`; // 結束 data-list 區塊
+            html += `</div>`; // 結束經文的 data-list 區塊
 
             html += `<div class="section-title">詩歌</div>`;
+            html += `<div class="data-list">`; // 讓詩歌區塊也跟隨 20px 左縮排
             
             let hasHymns = false;
             let hymnsListHTML = '';
@@ -265,25 +262,16 @@ async function findClosestDataAsync(targetDateStr) {
 
             // 3. 判斷是否有詩歌，決定用卡片包裝還是顯示無詩歌提示
             if (hasHymns) {
-                // 將整理好的詩歌放進帶有圓角的 hymn-card 區塊
                 html += `<div class="hymn-card"><ul>${hymnsListHTML}</ul></div>`;
             } else {
-                html += `<ul class="data-list"><li style="color:#94a3b8; list-style:none;">(無對應詩歌)</li></ul>`;
+                html += `<ul><li style="color:#94a3b8; list-style:none;">(無對應詩歌)</li></ul>`;
             }
+            
+            html += `</div>`; // 結束詩歌的 data-list 區塊
 
             html += `<div class="meta">`;
-            if (dataItem.color) {
-                // 為了搭配顏色小圓點的 CSS，這裡直接插入簡單的內聯樣式
-                let dotColor = '#94a3b8'; // 預設灰色
-                if (dataItem.color.includes('綠')) dotColor = '#16a34a';
-                if (dataItem.color.includes('白')) dotColor = '#cbd5e1'; // 白色會看不到，用淺灰框線代替
-                if (dataItem.color.includes('紫')) dotColor = '#7e22ce';
-                if (dataItem.color.includes('紅')) dotColor = '#dc2626';
-                if (dataItem.color.includes('黑')) dotColor = '#1e293b';
-                if (dataItem.color.includes('藍')) dotColor = '#2563eb';
-                
-                html += `<p style="display:flex; align-items:center;"><strong>代表顏色：</strong> <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:${dotColor}; margin:0 5px; ${dataItem.color.includes('白') ? 'border:1px solid #94a3b8;' : ''}"></span> ${dataItem.color}</p>`;
-            }
+            // 原本的資料庫就自帶顏色符號，恢復單純輸出避免雙圓點
+            if (dataItem.color) html += `<p><strong>代表顏色：</strong> ${dataItem.color}</p>`;
             if (dataItem.meaning) html += `<p><strong>節期意義：</strong> ${dataItem.meaning}</p>`;
             html += `</div>`;
         });
