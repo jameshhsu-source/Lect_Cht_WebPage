@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<!-- 社群分享預覽設定 (Open Graph) -->
-	<meta property="og:title" content="中文三代經課系統" />
-	<meta property="og:description" content="提供每週 RCL 三代經課經文，並自動配對推薦古典聖詩與現代詩歌。" />
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://jameshhsu-source.github.io/Lect_Cht_WebPage/" />
-	<!-- 注意：請在您的資料夾中放入一張漂亮的網頁截圖 (例如 og-image.png)，並將下方檔名替換掉 -->
-	<meta property="og:image" content="https://jameshhsu-source.github.io/Lect_Cht_WebPage/og-image.png" />
-	<meta property="og:site_name" content="中文三代經課" />
+    <!-- 社群分享預覽設定 (Open Graph) -->
+    <meta property="og:title" content="中文三代經課系統" />
+    <meta property="og:description" content="提供每週 RCL 三代經課經文，並自動配對推薦古典聖詩與現代詩歌。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jameshhsu-source.github.io/Lect_Cht_WebPage/" />
+    <!-- 注意：請在您的資料夾中放入一張漂亮的網頁截圖 (例如 og-image.png)，並將下方檔名替換掉 -->
+    <meta property="og:image" content="https://jameshhsu-source.github.io/Lect_Cht_WebPage/og-image.png" />
+    <meta property="og:site_name" content="中文三代經課" />
     <title>中文三代經課</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; line-height: 1.6; background-color: #f8fafc; color: #1e293b; }
@@ -25,6 +25,22 @@
         .data-list { padding-left: 20px; margin-top: 10px; }
         .meta { margin-top: 20px; font-size: 0.95rem; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
         a { color: #2563eb; text-decoration: none; word-break: break-all; }
+        
+        /* 新增：詩歌卡片的專屬樣式 */
+        .hymn-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+        .hymn-card ul {
+            list-style: none; /* 去除點點 */
+            padding-left: 0;  /* 靠左對齊 */
+            margin: 0;
+        }
+        .hymn-card li {
+            margin-bottom: 4px; /* 詩歌間距 */
+        }
     </style>
 </head>
 <body>
@@ -179,7 +195,7 @@ async function findClosestDataAsync(targetDateStr) {
     }
 }
 
-    // 您的 UI 渲染邏輯完全不變
+    // UI 渲染邏輯
     function renderData(dateStr, data, isFallback, originalDate) {
         const alertBox = document.getElementById('alertBox');
         if (alertBox) alertBox.style.display = 'none';
@@ -192,12 +208,9 @@ async function findClosestDataAsync(targetDateStr) {
                 html += `<hr style="margin: 30px 0; border: 0; border-top: 2px dashed #cbd5e1;">`;
             }
 
-			html += `  <h3 style="margin: 0;">${dataItem.title}</h3>`;
-			html += `</div>`;            
-			html += `<div>`;
-			html += `  <a href="about_church_year.html" style="color: #333; text-decoration: none; font-size: 0.85em;">關於教會年</a>`;
-			html += `</div>`;            
-			html += `<div class="section-title">經課經文</div><div class="data-list">`;
+            html += `<h3 style="margin: 0;">${dataItem.title}</h3>`;
+            html += `<div><a href="about_church_year.html" style="color: #333; text-decoration: none; font-size: 0.85em;">關於教會年</a></div>`;            
+            html += `<div class="section-title">經課經文</div><div class="data-list">`;
             
             const scripts = dataItem.scriptures;
             
@@ -206,14 +219,14 @@ async function findClosestDataAsync(targetDateStr) {
                 scripts.general.forEach(item => html += `<div style="margin-bottom: 4px;">${item}</div>`);
             }
             
-			// 2. 如果有雙軌制，用黑白簡約的區塊並排包起來
+            // 2. 如果有雙軌制，用黑白簡約的區塊並排包起來
             const hasDualTracks = (scripts.track_semi_continuous && scripts.track_semi_continuous.length > 0) || 
                                   (scripts.track_complementary && scripts.track_complementary.length > 0);
             
             if (hasDualTracks) {
                 html += `<div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px;">`;
                 
-                // 【半連續式】區塊 - 黑白簡約風格
+                // 【半連續式】區塊
                 if (scripts.track_semi_continuous && scripts.track_semi_continuous.length > 0) {
                     html += `<div style="flex: 1; min-width: 250px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">`;
                     html += `<div style="font-weight: bold; margin-bottom: 8px;">【半連續式】</div>`;
@@ -221,7 +234,7 @@ async function findClosestDataAsync(targetDateStr) {
                     html += `</div>`;
                 }
                 
-                // 【呼應式】區塊 - 黑白簡約風格
+                // 【呼應式】區塊
                 if (scripts.track_complementary && scripts.track_complementary.length > 0) {
                     html += `<div style="flex: 1; min-width: 250px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">`;
                     html += `<div style="font-weight: bold; margin-bottom: 8px;">【呼應式】</div>`;
@@ -233,30 +246,44 @@ async function findClosestDataAsync(targetDateStr) {
             
             html += `</div>`; // 結束 data-list 區塊
 
-        html += `<div class="section-title">詩歌</div><ul class="data-list">`;
-        
-        let hasHymns = false;
+            html += `<div class="section-title">詩歌</div>`;
+            
+            let hasHymns = false;
+            let hymnsListHTML = '';
 
-        // 1. 先列出古典詩歌
-        if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
-            dataItem.classical_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
-            hasHymns = true;
-        }
-        
-        // 2. 接著列出現代詩歌
-        if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
-            dataItem.modern_hymns.forEach(hymn => html += `<li>${hymn}</li>`);
-            hasHymns = true;
-        }
+            // 1. 先列出古典詩歌
+            if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
+                dataItem.classical_hymns.forEach(hymn => hymnsListHTML += `<li>${hymn}</li>`);
+                hasHymns = true;
+            }
+            
+            // 2. 接著列出現代詩歌
+            if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
+                dataItem.modern_hymns.forEach(hymn => hymnsListHTML += `<li>${hymn}</li>`);
+                hasHymns = true;
+            }
 
-        // 3. 若兩者皆無，顯示提示
-        if (!hasHymns) {
-            html += `<li style="color:#94a3b8; list-style:none;">(無對應詩歌)</li>`;
-        }
-        html += `</ul>`;
+            // 3. 判斷是否有詩歌，決定用卡片包裝還是顯示無詩歌提示
+            if (hasHymns) {
+                // 將整理好的詩歌放進帶有圓角的 hymn-card 區塊
+                html += `<div class="hymn-card"><ul>${hymnsListHTML}</ul></div>`;
+            } else {
+                html += `<ul class="data-list"><li style="color:#94a3b8; list-style:none;">(無對應詩歌)</li></ul>`;
+            }
 
             html += `<div class="meta">`;
-            if (dataItem.color) html += `<p><strong>代表顏色：</strong> ${dataItem.color}</p>`;
+            if (dataItem.color) {
+                // 為了搭配顏色小圓點的 CSS，這裡直接插入簡單的內聯樣式
+                let dotColor = '#94a3b8'; // 預設灰色
+                if (dataItem.color.includes('綠')) dotColor = '#16a34a';
+                if (dataItem.color.includes('白')) dotColor = '#cbd5e1'; // 白色會看不到，用淺灰框線代替
+                if (dataItem.color.includes('紫')) dotColor = '#7e22ce';
+                if (dataItem.color.includes('紅')) dotColor = '#dc2626';
+                if (dataItem.color.includes('黑')) dotColor = '#1e293b';
+                if (dataItem.color.includes('藍')) dotColor = '#2563eb';
+                
+                html += `<p style="display:flex; align-items:center;"><strong>代表顏色：</strong> <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color:${dotColor}; margin:0 5px; ${dataItem.color.includes('白') ? 'border:1px solid #94a3b8;' : ''}"></span> ${dataItem.color}</p>`;
+            }
             if (dataItem.meaning) html += `<p><strong>節期意義：</strong> ${dataItem.meaning}</p>`;
             html += `</div>`;
         });
