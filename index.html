@@ -15,20 +15,11 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; line-height: 1.6; background-color: #f8fafc; color: #1e293b; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
-        .search-area { display: flex; gap: 10px; margin-bottom: 20px; }
-        .input-wrapper { position: relative; flex-grow: 1; display: flex; }
-        
-        /* 文字輸入框，右側預留空間給日曆按鈕 */
-        input[type="text"] { padding: 10px; padding-right: 40px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; font-size: 1rem; box-sizing: border-box; }
-        
-        /* 隱藏的日期選擇器，疊在右側上方，保持可點擊狀態 */
-        input[type="date"].overlay-date { position: absolute; right: 0; top: 0; width: 40px; height: 100%; opacity: 0; cursor: pointer; box-sizing: border-box; }
-        
-        /* 視覺上的日曆圖示 */
-        .calendar-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 1.2rem; }
-        
-        button { padding: 10px 20px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; flex-shrink: 0; }
-        button:hover { background-color: #1d4ed8; }
+        /* 搜尋區塊：自動排版與換行 */
+        .search-area { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .search-area input { flex: 1; min-width: 140px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+        .search-area button { padding: 10px 20px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; flex-shrink: 0; min-width: 80px; }
+        .search-area button:hover { background-color: #1d4ed8; }
         
         .alert { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.95rem; display: none; }
         h2 { color: #0f172a; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
@@ -48,12 +39,9 @@
 <div class="card">
     <h2>中文三代經課</h2>
     <div class="search-area">
-        <!-- 複合式輸入框：同時支援文字與日曆圖示 -->
-        <div class="input-wrapper">
-            <input type="text" id="dateInput" placeholder="輸入節期或點擊右側日曆 ➔">
-            <input type="date" id="datePickerOverlay" class="overlay-date" onchange="document.getElementById('dateInput').value = this.value">
-            <span class="calendar-icon">📅</span>
-        </div>
+        <!-- 兩個獨立的輸入框，透過 oninput 互相清空對方 -->
+        <input type="date" id="dateInput" oninput="document.getElementById('keywordInput').value=''" title="選擇日期">
+        <input type="text" id="keywordInput" placeholder="輸入節日或主日名稱" oninput="document.getElementById('dateInput').value=''">
         <button onclick="handleSearch()">查詢</button>
     </div>
     <div id="alertBox" class="alert"></div>
@@ -103,27 +91,25 @@
     window.onload = async function() {
         const todayObj = new Date();
         const todayStr = getLocalDateString(todayObj);
-        // 同時將今天日期填入文字框與隱藏的日期選擇器中
         document.getElementById('dateInput').value = todayStr;
-        document.getElementById('datePickerOverlay').value = todayStr;
+        document.getElementById('keywordInput').value = ''; 
         
         document.getElementById('resultContent').innerHTML = "<p>資料庫載入中...</p>";
         await findClosestDataAsync(todayStr);
     }
 
     async function handleSearch() {
-        const inputVal = document.getElementById('dateInput').value.trim();
-        if(!inputVal) return;
+        const dateVal = document.getElementById('dateInput').value;
+        const keywordVal = document.getElementById('keywordInput').value.trim();
+
+        if (!dateVal && !keywordVal) return;
 
         document.getElementById('resultContent').innerHTML = "<p>資料庫載入中...</p>";
 
-        const isDate = /^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(inputVal);
-        
-        if (isDate) {
-            const targetDateStr = inputVal.replace(/\//g, '-');
-            await findClosestDataAsync(targetDateStr);
-        } else {
-            await searchByKeyword(inputVal);
+        if (dateVal) {
+            await findClosestDataAsync(dateVal);
+        } else if (keywordVal) {
+            await searchByKeyword(keywordVal);
         }
     }
 
@@ -131,6 +117,7 @@
         const today = new Date();
         const currentYear = today.getFullYear();
         
+        // 為了確保不漏掉節期交界處，載入前後一年的資料庫
         await loadYearDataIfNeeded(currentYear - 1);
         await loadYearDataIfNeeded(currentYear);
         await loadYearDataIfNeeded(currentYear + 1);
@@ -143,15 +130,13 @@
 
         for (const [dateStr, events] of Object.entries(lectionaryData)) {
             for (const event of events) {
+                // 強制過濾：只抓同一個教會年年度內的資料
                 if (currentCycle && event.title && !event.title.includes(`(${currentCycle})`)) {
                     continue; 
                 }
                 
-                const matchTitle = event.title && event.title.includes(keyword);
-                const matchSeason = event.season && event.season.includes(keyword);
-                const matchMeaning = event.meaning && event.meaning.includes(keyword);
-                
-                if (matchTitle || matchSeason || matchMeaning) {
+                // 僅比對主日或節日名稱 (title)，不進行全文搜尋
+                if (event.title && event.title.includes(keyword)) {
                     let eventDate = new Date(dateStr);
                     let diff = Math.abs(eventDate - today);
                     if (diff < minDiff) {
@@ -176,7 +161,7 @@
         } else {
             if (alertBox) {
                 alertBox.style.display = 'block';
-                alertBox.innerHTML = `在 ${currentCycle || '當前年度'} 內找不到與「${keyword}」相關的節期或節日。`;
+                alertBox.innerHTML = `在 ${currentCycle || '當前年度'} 內找不到與「${keyword}」相關的主日或節日名稱。`;
                 alertBox.style.backgroundColor = '#fee2e2';
                 alertBox.style.color = '#b91c1c';
                 alertBox.style.border = '1px solid #fecaca';
