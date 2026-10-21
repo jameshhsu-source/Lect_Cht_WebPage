@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>認識教會年 - 與基督同行的靈命旅程</title>
+    <title>認識教會年</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -42,16 +42,15 @@
             text-align: center;
             margin: 30px 0;
         }
+        /* 去除圖片陰影與外框，讓圖形背景與網頁容器無縫融合 */
         .hero-image img {
-            max-width: 100%;
+            width: 100%; 
+            max-width: 700px;
             height: auto;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .image-caption {
-            font-size: 0.85em;
-            color: #64748b;
-            margin-top: 10px;
+            display: block;
+            margin: 0 auto;
+            border: none;
+            box-shadow: none;
         }
         .season-card {
             background: #f1f5f9;
@@ -67,8 +66,8 @@
             font-size: 0.9em;
             font-weight: bold;
             margin-right: 10px;
+            margin-bottom: 5px;
         }
-        /* 補上藍色標籤的 CSS */
         .bg-blue { background-color: #2563eb; }
         .bg-purple { background-color: #7e22ce; }
         .bg-white { background-color: #f8fafc; color: #333; border: 1px solid #cbd5e1; }
@@ -91,14 +90,12 @@
     <!-- 頂部返回連結 -->
     <a href="index.html" class="back-link">← 返回中文三代經課</a>
 
-    <h1>走進教會年：與基督同行的靈命旅程</h1>
+    <h1>走進教會年：與基督同行的信仰人生</h1>
 
-    <p>「教會年」（Church Year 或 Liturgical Year），是歷代教會為了幫助信徒更深刻地認識基督，而精心編排的屬靈節奏。透過每年不斷循環的節期，我們得以在歷史與信仰的交織中，以「螺旋向上」的方式，一年比一年更深地經歷三一上帝的奇妙作為。</p>
+    <p>「教會年」（Liturgical Year 或 Church Year），是歷代教會為了幫助信徒更深刻地認識基督，而精心編排的屬靈節奏。透過每年不斷循環的節期，我們得以在歷史與信仰的交織中，在日常生活中經歷三一上帝的奇妙作為。</p>
 
     <div class="hero-image">
-        <!-- 請將 src 的檔名替換為你實際存檔的圖片檔名 -->
-        <img src="church_year_chart.jpg" alt="教會年曆圓餅圖">
-        <div class="image-caption">圖片版權所有 © South Asian Lutheran Evangelical Mission, Ltd.</div>
+        <img src="church_year_simplified.svg" alt="教會年曆圓餅圖">
     </div>
 
     <h2>一、 教會年的基本輪廓</h2>
@@ -113,37 +110,42 @@
     <div class="season-card">
         <h3>1. 將臨期 (Advent)</h3>
         <p><span class="color-badge bg-blue">藍色</span> <strong>時段：</strong>聖誕節往前推算的四個主日。</p>
-        <p><strong>屬靈意義：</strong>這個節期我們一方面懷著喜悅的心預備慶祝基督的降生，另一方面也等候基督的再臨。</p>
+        <p><strong>屬靈意義：</strong>這個節期我們預備慶祝基督的降生、等候基督的再臨。</p>
     </div>
 
     <div class="season-card">
         <h3>2. 聖誕期 (Christmas)</h3>
         <p><span class="color-badge bg-white">白色</span> <strong>時段：</strong>從平安夜（12/24）至隔年 1/5。</p>
-        <p><strong>屬靈意義：</strong>這是一個充滿慶賀與展望的時刻。我們歡慶道成肉身的奇蹟，並展望未來能與基督永恆同在的美好應許。</p>
+        <p><strong>屬靈意義：</strong>我們慶賀基督降生！</p>
     </div>
 
     <div class="season-card">
         <h3>3. 顯現期 (Epiphany)</h3>
         <p><span class="color-badge bg-white">白色 (特殊節日)</span> <span class="color-badge bg-green">綠色 (一般主日)</span> <strong>時段：</strong>自主顯日（1/6）起至聖灰日前一天。</p>
-        <p><strong>屬靈意義：</strong>「顯現」意味著基督向世人展明祂真實的身份。透過主顯日、耶穌受洗、登山變像等事蹟，我們藉著祂在世上的工作，真正地認識祂是誰。</p>
+        <p><strong>屬靈意義：</strong>這個節期我們慶賀基督顯明身份、開展其在世的工作。</p>
     </div>
 
     <div class="season-card">
         <h3>4. 預苦期 (Lent)</h3>
-        <p><span class="color-badge bg-purple">紫色</span> <span class="color-badge bg-black">黑色 (受難日/聖週六)</span> <strong>時段：</strong>復活節往前推算四十天（不含主日）。</p>
+        <p>
+            <span class="color-badge bg-purple">紫色</span> 
+            <span class="color-badge bg-red">紅色 (聖週)</span> 
+            <span class="color-badge bg-black">黑色 (受難日)</span> 
+            <strong>時段：</strong>復活節往前推算四十天（不含主日）。
+        </p>
         <p><strong>屬靈意義：</strong>這段時期，我們帶著悔罪的心，與基督同走十架苦路。</p>
     </div>
 
     <div class="season-card">
         <h3>5. 復活期 (Easter)</h3>
         <p><span class="color-badge bg-white">白色</span> <strong>時段：</strong>復活節起連續七週。</p>
-        <p><strong>屬靈意義：</strong>高唱得勝的凱歌！我們歡慶復活的基督已經為全人類徹底戰勝了罪惡與死亡的權勢。</p>
+        <p><strong>屬靈意義：</strong>這個節期我們歡慶復活的基督已為我們徹底戰勝了罪惡與死亡的權勢。</p>
     </div>
 
     <div class="season-card">
         <h3>6. 聖靈降臨期 / 常年期 (Pentecost / Ordinary Time)</h3>
         <p><span class="color-badge bg-red">紅色 (聖靈降臨主日)</span> <span class="color-badge bg-white">白色 (三一主日/基督君王主日)</span> <span class="color-badge bg-green">綠色 (常年期)</span> <strong>時段：</strong>自聖靈降臨主日起至下一個教會年將臨期以前。</p>
-        <p><strong>屬靈意義：</strong>這是教會年的下半年。我們慶賀聖靈保惠師的降臨，並在日常平靜的生活中，持續因學習聖道而成長。</p>
+        <p><strong>屬靈意義：</strong>這是教會年的下半年。我們慶賀聖靈的同在，並在聖靈的帶領下，持續在聖道與聖禮中靈命成長。</p>
     </div>
 
     <h2>三、 教會年與我們的生命連結</h2>
