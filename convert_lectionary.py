@@ -1813,11 +1813,11 @@ for year in range(START_YEAR, END_YEAR + 1):
             elif date(year, 1, 1) <= curr < epiphany:
                 prev_christmas = date(year-1, 12, 25)
                 idx = (curr - prev_christmas).days // 7
-                season, sunday, name = "Christmas", f"{ords[idx]} Sunday", f"聖誕期第{zh_ords[idx]}主日"
+                season, sunday, name = "Christmas", f"{ords[idx]} Sunday", f"聖誕期{zh_ords[idx]}主日"
             elif date(year, 12, 25) < curr <= date(year, 12, 31):
                 curr_christmas = date(year, 12, 25)
                 idx = (curr - curr_christmas).days // 7
-                season, sunday, name = "Christmas", f"{ords[idx]} Sunday", f"聖誕期第{zh_ords[idx]}主日"
+                season, sunday, name = "Christmas", f"{ords[idx]} Sunday", f"聖誕期{zh_ords[idx]}主日"
 
             # 顯現期
             elif epiphany <= curr < ash_wednesday:
@@ -1826,7 +1826,7 @@ for year in range(START_YEAR, END_YEAR + 1):
                 else:
                     base_sun = epiphany + timedelta(days = (6 - epiphany.weekday()) if epiphany.weekday() != 6 else 7)
                     idx = (curr - base_sun).days // 7
-                    season, sunday, name = "Epiphany", f"{ords[idx]} Sunday", f"顯現後第{zh_ords[idx]}主日"
+                    season, sunday, name = "Epiphany", f"{ords[idx]} Sunday", f"顯現後{zh_ords[idx]}主日"
                     if idx == 0:
                         sunday, name = "First Sunday", "耶穌受洗主日"
 
@@ -1834,12 +1834,12 @@ for year in range(START_YEAR, END_YEAR + 1):
             elif ash_wednesday < curr < easter - timedelta(days=7):
                 base_sun = ash_wednesday + timedelta(days = (6 - ash_wednesday.weekday()))
                 idx = (curr - base_sun).days // 7
-                season, sunday, name = "Lent", f"{ords[idx]} Sunday", f"預苦期第{zh_ords[idx]}主日"
+                season, sunday, name = "Lent", f"{ords[idx]} Sunday", f"預苦期{zh_ords[idx]}主日"
 
             # 復活期
             elif easter < curr < pentecost:
                 idx = (curr - easter).days // 7
-                season, sunday, name = "Easter", f"{ords[idx]} Sunday", f"復活期第{zh_ords[idx]}主日"
+                season, sunday, name = "Easter", f"{ords[idx]} Sunday", f"復活期{zh_ords[idx]}主日"
 
             # 常年期 (往回推算 Proper 組數)
             elif trinity < curr < christ_the_king:

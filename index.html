@@ -41,7 +41,7 @@
     <div class="search-area">
         <!-- 兩個獨立的輸入框，透過 oninput 互相清空對方 -->
         <input type="date" id="dateInput" oninput="document.getElementById('keywordInput').value=''" title="選擇日期">
-        <input type="text" id="keywordInput" placeholder="輸入節日或主日名稱" oninput="document.getElementById('dateInput').value=''">
+        <input type="text" id="keywordInput" placeholder="輸入節日或主日關鍵字" oninput="document.getElementById('dateInput').value=''">
         <button onclick="handleSearch()">查詢</button>
     </div>
     <div id="alertBox" class="alert"></div>
