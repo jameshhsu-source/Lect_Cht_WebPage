@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 社群分享預覽設定 (Open Graph) -->
+    <meta property="og:title" content="中文三代經課系統" />
+    <meta property="og:description" content="提供每週 RCL 三代經課經文，並自動配對推薦古典聖詩與現代詩歌。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jameshhsu-source.github.io/Lect_Cht_WebPage/" />
+    <!-- 注意：請在您的資料夾中放入一張漂亮的網頁截圖 (例如 og-image.png)，並將下方檔名替換掉 -->
+    <meta property="og:image" content="https://jameshhsu-source.github.io/Lect_Cht_WebPage/og-image.png" />
+    <meta property="og:site_name" content="中文三代經課" />
+    <title>中文三代經課</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; line-height: 1.6; background-color: #f8fafc; color: #1e293b; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .search-area { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="date"] { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; flex-grow: 1; font-size: 1rem; }
+        button { padding: 10px 20px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+        button:hover { background-color: #1d4ed8; }
+        .alert { background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; display: none; }
+        h2 { color: #0f172a; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .section-title { font-weight: bold; color: #334155; margin-top: 20px; background: #f1f5f9; padding: 5px 10px; border-radius: 4px; }
+        .data-list { padding-left: 20px; margin-top: 10px; }
+        .meta { margin-top: 20px; font-size: 0.95rem; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
+        a { color: #2563eb; text-decoration: none; word-break: break-all; }
+        
+        /* 詩歌卡片的專屬樣式 */
+        .hymn-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 5px;
+        }
+        .hymn-card ul {
+            list-style: none; /* 去除點點 */
+            padding-left: 0;  /* 靠左對齊 */
+            margin: 0;
+        }
+        .hymn-card li {
+            margin-bottom: 4px; /* 詩歌間距 */
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>中文三代經課</h2>
+    <div class="search-area">
+        <input type="date" id="dateInput">
+        <button onclick="handleSearch()">查詢</button>
+    </div>
+    <div id="alertBox" class="alert"></div>
+    <div id="resultContent">載入資料庫中...</div>
+</div>
+
+<script>
+    let lectionaryData = {};
+    let loadedYears = new Set(); // 紀錄已經載入過哪些年份，避免重複下載
+
+    // 處理時區，取得本地 YYYY-MM-DD
+    function getLocalDateString(dateObj) {
+        const tzOffset = dateObj.getTimezoneOffset() * 60000;
+        return new Date(dateObj - tzOffset).toISOString().split('T')[0];
+    }
+
+    // 核心優化：非同步載入特定年份的資料
+    async function loadYearDataIfNeeded(year) {
+        if (loadedYears.has(year)) return; // 已經載入過就跳過，瞬間讀取
+        
+        try {
+            // 讀取對應年份的小檔案
+            const response = await fetch(`rcl_data_yearly/rcl_data_${year}.json`);
+            if (response.ok) {
+                const data = await response.json();
+                // 將新載入的年份資料合併進大字典中
+                Object.assign(lectionaryData, data);
+                loadedYears.add(year);
+            } else {
+                console.warn(`找不到 ${year} 年的資料檔案`);
+            }
+        } catch (error) {
+            console.error(`載入 ${year} 年資料失敗`, error);
+        }
+    }
+
+    window.onload = async function() {
+        const todayObj = new Date();
+        const todayStr = getLocalDateString(todayObj);
+        document.getElementById('dateInput').value = todayStr;
+        
+        // 顯示載入中提示
+        document.getElementById('resultContent').innerHTML = "<p>資料庫載入中...</p>";
+
+        // 啟動搜尋 (現在改為 async，會自動判斷要抓哪一年的檔案)
+        await findClosestDataAsync(todayStr);
+    }
+
+    async function handleSearch() {
+        const targetDate = document.getElementById('dateInput').value;
+        if(targetDate) {
+            document.getElementById('resultContent').innerHTML = "<p>資料庫載入中...</p>";
+            await findClosestDataAsync(targetDate);
+        }
+    }
+
+// 智慧型查詢邏輯：平日往前找最近主日，嚴格防範跨越節期
+async function findClosestDataAsync(targetDateStr) {
+    let targetDate = new Date(targetDateStr);
+    let targetYear = targetDate.getFullYear();
+    
+    // 確保年份資料已載入
+    await loadYearDataIfNeeded(targetYear);
+
+    // 1. 先檢查「當天」資料庫有沒有直接對應（例如 12/24 平安夜、12/25 聖誕節等特殊節日）
+    if (lectionaryData[targetDateStr]) {
+        renderData(targetDateStr, lectionaryData[targetDateStr], false, targetDateStr);
+        return;
+    }
+
+    // 取得當天預期應該落在哪個節期（透過年份或前後資料推導，或者我們從資料庫裡找最近的節期判定）
+    let currentSeason = null;
+    let tempDate = new Date(targetDate);
+    for (let i = 0; i < 7; i++) {
+        let dStr = getLocalDateString(tempDate);
+        if (lectionaryData[dStr] && lectionaryData[dStr].length > 0) {
+            currentSeason = lectionaryData[dStr][0].season; 
+            break;
+        }
+        tempDate.setDate(tempDate.getDate() - 1);
+    }
+
+    // 2. 嘗試往前找最近的主日（weekday === 0）
+    let searchDate = new Date(targetDate);
+    let dayOfWeek = searchDate.getDay();
+    let diffToSunday = dayOfWeek === 0 ? 0 : dayOfWeek;
+    searchDate.setDate(searchDate.getDate() - diffToSunday); // 先對齊到最近的主日
+
+    let found = false;
+    let lookbackDays = diffToSunday;
+
+    while (lookbackDays < 35) { // 最多往前找 5 週
+        let sStr = getLocalDateString(searchDate);
+        await loadYearDataIfNeeded(searchDate.getFullYear());
+
+        if (lectionaryData[sStr] && lectionaryData[sStr].length > 0) {
+            let candidate = lectionaryData[sStr][0];
+            
+            // 【關鍵防呆檢核】：檢查找到的主日是否跟當前查詢日屬於同一個節期？
+            if (currentSeason && candidate.season && currentSeason !== candidate.season) {
+                // 跨節期！停止往回抓主日，改為抓「同節期內最近的節日」
+                break; 
+            }
+
+            // 同節期，完美！直接顯示該主日
+            renderData(sStr, lectionaryData[sStr], true, targetDateStr);
+            found = true;
+            break;
+        }
+
+        searchDate.setDate(searchDate.getDate() - 7);
+        lookbackDays += 7;
+    }
+
+    // 3. 如果因為「跨節期」而中斷，或者一直找不到主日，我們改用「逐日往回找最近的同節期事件」
+    if (!found) {
+        let fallbackDate = new Date(targetDate);
+        let fallbackDays = 0;
+        while (fallbackDays < 14) { // 兩週內尋找同節期的最近節日
+            let fStr = getLocalDateString(fallbackDate);
+            await loadYearDataIfNeeded(fallbackDate.getFullYear());
+
+            if (lectionaryData[fStr] && lectionaryData[fStr].length > 0) {
+                let candidate = lectionaryData[fStr][0];
+                if (!currentSeason || candidate.season === currentSeason) {
+                    renderData(fStr, lectionaryData[fStr], true, targetDateStr);
+                    found = true;
+                    break;
+                }
+            }
+            fallbackDate.setDate(fallbackDate.getDate() - 1);
+            fallbackDays++;
+        }
+    }
+
+    if (!found) {
+        const alertBox = document.getElementById('alertBox');
+        if (alertBox) alertBox.style.display = 'none';
+        document.getElementById('resultContent').innerHTML = "<p>找不到該日期或相近的經課資料。</p>";
+    }
+}
+
+    // UI 渲染邏輯
+    function renderData(dateStr, data, isFallback, originalDate) {
+        const alertBox = document.getElementById('alertBox');
+        if (alertBox) alertBox.style.display = 'none';
+
+        const events = Array.isArray(data) ? data : [data];
+        let html = '';
+
+        events.forEach((dataItem, index) => {
+            if (index > 0) {
+                html += `<hr style="margin: 30px 0; border: 0; border-top: 2px dashed #cbd5e1;">`;
+            }
+
+            html += `<h3 style="margin: 0;">${dataItem.title}</h3>`;
+            html += `<div><a href="about_church_year.html" style="color: #333; text-decoration: none; font-size: 0.85em;">關於教會年</a></div>`;            
+            html += `<div class="section-title">經課經文</div><div class="data-list">`;
+            
+            const scripts = dataItem.scriptures;
+            
+            // 1. 先印出一般經文 (如果有的話)
+            if (scripts.general && scripts.general.length > 0) {
+                scripts.general.forEach(item => html += `<div style="margin-bottom: 4px;">${item}</div>`);
+            }
+            
+            // 2. 如果有雙軌制，用黑白簡約的區塊並排包起來
+            const hasDualTracks = (scripts.track_semi_continuous && scripts.track_semi_continuous.length > 0) || 
+                                  (scripts.track_complementary && scripts.track_complementary.length > 0);
+            
+            if (hasDualTracks) {
+                html += `<div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px;">`;
+                
+                // 【半連續式】區塊
+                if (scripts.track_semi_continuous && scripts.track_semi_continuous.length > 0) {
+                    html += `<div style="flex: 1; min-width: 250px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">`;
+                    html += `<div style="font-weight: bold; margin-bottom: 8px;">【半連續式】</div>`;
+                    scripts.track_semi_continuous.forEach(item => html += `<div style="margin-bottom: 4px;">${item}</div>`);
+                    html += `</div>`;
+                }
+                
+                // 【呼應式】區塊
+                if (scripts.track_complementary && scripts.track_complementary.length > 0) {
+                    html += `<div style="flex: 1; min-width: 250px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">`;
+                    html += `<div style="font-weight: bold; margin-bottom: 8px;">【呼應式】</div>`;
+                    scripts.track_complementary.forEach(item => html += `<div style="margin-bottom: 4px;">${item}</div>`);
+                    html += `</div>`;
+                }
+                html += `</div>`;
+            }
+            
+            html += `</div>`; // 結束經文的 data-list 區塊
+
+            html += `<div class="section-title">詩歌</div>`;
+            html += `<div class="data-list">`; // 讓詩歌區塊也跟隨 20px 左縮排
+            
+            let hasHymns = false;
+            let hymnsListHTML = '';
+
+            // 1. 先列出古典詩歌
+            if (dataItem.classical_hymns && dataItem.classical_hymns.length > 0) {
+                dataItem.classical_hymns.forEach(hymn => hymnsListHTML += `<li>${hymn}</li>`);
+                hasHymns = true;
+            }
+            
+            // 2. 接著列出現代詩歌
+            if (dataItem.modern_hymns && dataItem.modern_hymns.length > 0) {
+                dataItem.modern_hymns.forEach(hymn => hymnsListHTML += `<li>${hymn}</li>`);
+                hasHymns = true;
+            }
+
+            // 3. 判斷是否有詩歌，決定用卡片包裝還是顯示無詩歌提示
+            if (hasHymns) {
+                html += `<div class="hymn-card"><ul>${hymnsListHTML}</ul></div>`;
+            } else {
+                html += `<ul><li style="color:#94a3b8; list-style:none;">(無對應詩歌)</li></ul>`;
+            }
+            
+            html += `</div>`; // 結束詩歌的 data-list 區塊
+
+            html += `<div class="meta">`;
+            // 原本的資料庫就自帶顏色符號，恢復單純輸出避免雙圓點
+            if (dataItem.color) html += `<p><strong>代表顏色：</strong> ${dataItem.color}</p>`;
+            if (dataItem.meaning) html += `<p><strong>節期意義：</strong> ${dataItem.meaning}</p>`;
+            html += `</div>`;
+        });
+
+        document.getElementById('resultContent').innerHTML = html;
+    }
+</script>
+
+</body>
+</html>
