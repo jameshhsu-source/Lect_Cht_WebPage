@@ -28,10 +28,10 @@
         .meta { margin-top: 20px; font-size: 0.95rem; border-top: 1px dashed #cbd5e1; padding-top: 15px; }
         a { color: #2563eb; text-decoration: none; word-break: break-all; }
         
-        /* 詩歌卡片的專屬樣式 */
-        .hymn-card { border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-top: 5px; }
-        .hymn-card ul { list-style: none; padding-left: 0; margin: 0; }
-        .hymn-card li { margin-bottom: 4px; }
+        /* 詩歌列表的專屬樣式 */
+        .hymn-list { margin-top: 5px; }
+        .hymn-list ul { list-style: disc; padding-left: 20px; margin: 5px 0; }
+        .hymn-list li { margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -305,7 +305,7 @@
             }
 
             if (hasHymns) {
-                html += `<div class="hymn-card"><ul>${hymnsListHTML}</ul></div>`;
+                html += `<div class="hymn-list"><ul>${hymnsListHTML}</ul></div>`;
             } else {
                 html += `<ul><li style="color:#94a3b8; list-style:none;">(無對應詩歌)</li></ul>`;
             }
