@@ -149,7 +149,7 @@ async function searchByKeyword(keyword) {
             renderData(closestDateStr, closestData, false, null);
             if (alertBox) {
                 alertBox.style.display = 'block';
-                alertBox.innerHTML = `為您找到即將到來的「${keyword}」日期：<strong>${closestDateStr}</strong>`;
+                alertBox.innerHTML = `有「${keyword}」關鍵字的最近日期：<strong>${closestDateStr}</strong>`;
                 alertBox.style.backgroundColor = '#dbeafe';
                 alertBox.style.color = '#1e40af';
                 alertBox.style.border = '1px solid #bfdbfe';
