@@ -113,33 +113,29 @@
         }
     }
 
-    async function searchByKeyword(keyword) {
+async function searchByKeyword(keyword) {
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // 歸零時間，確保「今天」的節日也能被搜到
         const currentYear = today.getFullYear();
         
         // 為了確保不漏掉節期交界處，載入前後一年的資料庫
         await loadYearDataIfNeeded(currentYear - 1);
         await loadYearDataIfNeeded(currentYear);
         await loadYearDataIfNeeded(currentYear + 1);
-        
-        const currentCycle = await getCurrentChurchCycle(); 
-        
+
         let closestDateStr = null;
         let minDiff = Infinity;
         let closestData = null;
 
         for (const [dateStr, events] of Object.entries(lectionaryData)) {
             for (const event of events) {
-                // 強制過濾：只抓同一個教會年年度內的資料
-                if (currentCycle && event.title && !event.title.includes(`(${currentCycle})`)) {
-                    continue; 
-                }
-                
                 // 僅比對主日或節日名稱 (title)，不進行全文搜尋
                 if (event.title && event.title.includes(keyword)) {
                     let eventDate = new Date(dateStr);
-                    let diff = Math.abs(eventDate - today);
-                    if (diff < minDiff) {
+                    let diff = eventDate - today;
+                    
+                    // 只找「今天及未來」的日子 (diff >= 0)，並找出距離最近的
+                    if (diff >= 0 && diff < minDiff) {
                         minDiff = diff;
                         closestDateStr = dateStr;
                         closestData = events;
@@ -153,7 +149,7 @@
             renderData(closestDateStr, closestData, false, null);
             if (alertBox) {
                 alertBox.style.display = 'block';
-                alertBox.innerHTML = `為您找到最近的「${keyword}」日期：<strong>${closestDateStr}</strong>`;
+                alertBox.innerHTML = `為您找到即將到來的「${keyword}」日期：<strong>${closestDateStr}</strong>`;
                 alertBox.style.backgroundColor = '#dbeafe';
                 alertBox.style.color = '#1e40af';
                 alertBox.style.border = '1px solid #bfdbfe';
@@ -161,7 +157,7 @@
         } else {
             if (alertBox) {
                 alertBox.style.display = 'block';
-                alertBox.innerHTML = `在 ${currentCycle || '當前年度'} 內找不到與「${keyword}」相關的主日或節日名稱。`;
+                alertBox.innerHTML = `找不到「${keyword}」相關主日或節日。`;
                 alertBox.style.backgroundColor = '#fee2e2';
                 alertBox.style.color = '#b91c1c';
                 alertBox.style.border = '1px solid #fecaca';
