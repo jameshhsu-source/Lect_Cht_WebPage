@@ -113,29 +113,34 @@
         }
     }
 
-async function searchByKeyword(keyword) {
+	async function searchByKeyword(keyword) {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // 歸零時間，確保「今天」的節日也能被搜到
+        today.setHours(0, 0, 0, 0); // 歸零時間
         const currentYear = today.getFullYear();
         
         // 為了確保不漏掉節期交界處，載入前後一年的資料庫
         await loadYearDataIfNeeded(currentYear - 1);
         await loadYearDataIfNeeded(currentYear);
         await loadYearDataIfNeeded(currentYear + 1);
-
+        
+        // 算出「最近一個主日」的日期 (作為允許往前搜尋的底線)
+        const dayOfWeek = today.getDay(); // 0 是週日
+        const mostRecentSunday = new Date(today);
+        mostRecentSunday.setDate(today.getDate() - dayOfWeek);
+        
         let closestDateStr = null;
         let minDiff = Infinity;
         let closestData = null;
 
         for (const [dateStr, events] of Object.entries(lectionaryData)) {
             for (const event of events) {
-                // 僅比對主日或節日名稱 (title)，不進行全文搜尋
+                // 僅比對主日或節日名稱 (title)
                 if (event.title && event.title.includes(keyword)) {
                     let eventDate = new Date(dateStr);
-                    let diff = eventDate - today;
+                    let diff = Math.abs(eventDate - today);
                     
-                    // 只找「今天及未來」的日子 (diff >= 0)，並找出距離最近的
-                    if (diff >= 0 && diff < minDiff) {
+                    // 條件：必須大於等於最近一個主日，且距離今天絕對值最近
+                    if (eventDate >= mostRecentSunday && diff < minDiff) {
                         minDiff = diff;
                         closestDateStr = dateStr;
                         closestData = events;
@@ -149,7 +154,11 @@ async function searchByKeyword(keyword) {
             renderData(closestDateStr, closestData, false, null);
             if (alertBox) {
                 alertBox.style.display = 'block';
-                alertBox.innerHTML = `有「${keyword}」關鍵字的最近日期：<strong>${closestDateStr}</strong>`;
+                // 判斷是剛過去的還是未來的
+                const isPast = new Date(closestDateStr) < today;
+                const timeText = isPast ? '最近一次' : '即將到來';
+                
+                alertBox.innerHTML = `為您找到${timeText}的「${keyword}」日期：<strong>${closestDateStr}</strong>`;
                 alertBox.style.backgroundColor = '#dbeafe';
                 alertBox.style.color = '#1e40af';
                 alertBox.style.border = '1px solid #bfdbfe';
@@ -157,7 +166,7 @@ async function searchByKeyword(keyword) {
         } else {
             if (alertBox) {
                 alertBox.style.display = 'block';
-                alertBox.innerHTML = `找不到「${keyword}」相關主日或節日。`;
+                alertBox.innerHTML = `找不到「${keyword}」相關的主日或節日名稱。`;
                 alertBox.style.backgroundColor = '#fee2e2';
                 alertBox.style.color = '#b91c1c';
                 alertBox.style.border = '1px solid #fecaca';
